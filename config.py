@@ -31,6 +31,7 @@ NBA_SECTION_LABELS = {
 
 SOCCER_LEAGUES = [
     "Premier League", "La Liga", "Serie A", "Ligue 1", "Bundesliga", "FA Cup",
+    "Champions League",
 ]
 
 SOCCER_SECTIONS = ["results", "today_matches", "standings"]
