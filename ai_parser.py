@@ -45,7 +45,7 @@ Available: {json.dumps(COLOR_THEMES)}
 
 ## Response Format
 
-You MUST respond with valid JSON in this exact format:
+CRITICAL: Your entire response must be ONLY a single JSON object. No text before or after the JSON. No markdown code blocks. Just the raw JSON object.
 
 {{
   "reply": "Your friendly WhatsApp message to the user",
@@ -131,13 +131,32 @@ def parse_message(user_message, conversation_history=None):
 
         raw = response.content[0].text.strip()
 
-        # Extract JSON from the response (handle markdown code blocks)
-        if "```json" in raw:
-            raw = raw.split("```json")[1].split("```")[0].strip()
-        elif "```" in raw:
-            raw = raw.split("```")[1].split("```")[0].strip()
+        # Extract JSON from the response
+        json_str = None
 
-        result = json.loads(raw)
+        # Try markdown code blocks first
+        if "```json" in raw:
+            json_str = raw.split("```json")[1].split("```")[0].strip()
+        elif "```" in raw:
+            json_str = raw.split("```")[1].split("```")[0].strip()
+        else:
+            # Find the outermost JSON object by matching braces
+            start = raw.find("{")
+            if start != -1:
+                depth = 0
+                for i in range(start, len(raw)):
+                    if raw[i] == "{":
+                        depth += 1
+                    elif raw[i] == "}":
+                        depth -= 1
+                        if depth == 0:
+                            json_str = raw[start:i + 1]
+                            break
+
+        if not json_str:
+            json_str = raw
+
+        result = json.loads(json_str)
 
         # Validate required fields
         if "reply" not in result:
@@ -152,8 +171,13 @@ def parse_message(user_message, conversation_history=None):
         return result
 
     except json.JSONDecodeError:
+        # If JSON parsing fails entirely, use the raw text but strip any JSON-looking content
+        clean = raw
+        start = raw.find("{")
+        if start > 0:
+            clean = raw[:start].strip()
         return {
-            "reply": raw if raw else "I didn't quite get that. Could you try again?",
+            "reply": clean if clean else "I didn't quite get that. Could you try again?",
             "action": None,
             "data": None,
             "needs": None,
