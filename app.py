@@ -361,7 +361,8 @@ def webhook():
     return "OK", 200
 
 
-@app.route("/health", methods=["GET"])
+@app.route("/", methods=["GET", "HEAD"])
+@app.route("/health", methods=["GET", "HEAD"])
 def health():
     """Health check endpoint."""
     return jsonify({"status": "ok", "service": "mysportsreport-whatsapp-bot"}), 200
