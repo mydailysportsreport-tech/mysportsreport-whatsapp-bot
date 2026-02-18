@@ -1,1 +1,1 @@
-web: gunicorn app:app --bind 0.0.0.0:$PORT --log-level debug --preload
+web: gunicorn app:app --bind 0.0.0.0:$PORT --preload
