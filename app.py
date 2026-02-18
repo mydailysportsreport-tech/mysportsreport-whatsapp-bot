@@ -76,7 +76,7 @@ def supabase_headers():
     }
 
 
-def create_subscriber(data):
+def create_subscriber(data, phone=""):
     """Create a new subscriber in Supabase."""
     url = f"{SUPABASE_URL}/rest/v1/subscribers"
     payload = {
@@ -86,6 +86,7 @@ def create_subscriber(data):
         "color_theme": data.get("color_theme", "blue"),
         "favorite_athlete": data.get("favorite_athlete", ""),
         "sports": data.get("sports", []),
+        "phone": phone,
         "active": True,
     }
     resp = requests.post(url, headers=supabase_headers(), json=payload, timeout=15)
@@ -100,7 +101,16 @@ def create_subscriber(data):
 
 def lookup_subscribers(email):
     """Look up active subscribers by email."""
-    url = f"{SUPABASE_URL}/rest/v1/subscribers?email=eq.{email}&active=eq.true&select=id,name,email,sports,color_theme,favorite_athlete"
+    url = f"{SUPABASE_URL}/rest/v1/subscribers?email=eq.{email}&active=eq.true&select=id,name,email,sports,color_theme,favorite_athlete,phone"
+    resp = requests.get(url, headers=supabase_headers(), timeout=15)
+    if resp.status_code == 200:
+        return resp.json()
+    return []
+
+
+def lookup_by_phone(phone):
+    """Look up active subscribers by phone number."""
+    url = f"{SUPABASE_URL}/rest/v1/subscribers?phone=eq.{phone}&active=eq.true&select=id,name,email,sports,color_theme,favorite_athlete,phone"
     resp = requests.get(url, headers=supabase_headers(), timeout=15)
     if resp.status_code == 200:
         return resp.json()
@@ -164,10 +174,30 @@ def add_to_history(conv, role, content):
 def handle_message(phone, text):
     """Process an incoming WhatsApp message and return a reply."""
     conv = get_conversation(phone)
-    add_to_history(conv, "user", text)
+
+    # Look up existing kids linked to this phone number
+    if "known_kids" not in conv:
+        kids = lookup_by_phone(phone)
+        conv["known_kids"] = kids
+        if kids:
+            conv["pending_data"]["email"] = kids[0]["email"]
+
+    # Build context about known kids for Claude (inject on first message only)
+    known_kids_context = ""
+    if conv.get("known_kids") and len(conv["history"]) == 0:
+        kids_list = ", ".join(k["name"] for k in conv["known_kids"])
+        email = conv["known_kids"][0]["email"]
+        known_kids_context = (
+            f"\n[SYSTEM: This parent's phone is linked to these existing reports: "
+            f"{kids_list} (email: {email}). You do NOT need to ask for their email. "
+            f"For updates, you already know which kids they have.]"
+        )
+
+    msg_for_claude = text + known_kids_context
+    add_to_history(conv, "user", msg_for_claude)
 
     # Parse with Claude (full conversation history gives it context for multi-step flow)
-    result = parse_message(text, conv["history"][:-1])
+    result = parse_message(msg_for_claude, conv["history"][:-1])
     reply = result["reply"]
     action = result.get("action")
     data = result.get("data")
@@ -199,8 +229,9 @@ def handle_message(phone, text):
         if not final_data.get("name") or not final_data.get("email"):
             return reply
 
-        sub = create_subscriber(final_data)
+        sub = create_subscriber(final_data, phone=phone)
         if sub:
+            conv["known_kids"].append(sub)
             sub_id = sub.get("id", "")
             manage_url = f"{SETTINGS_URL}?id={sub_id}"
             reply += f"\n\n📎 Edit anytime: {manage_url}"
@@ -212,39 +243,37 @@ def handle_message(phone, text):
 
     elif action == "update" and data:
         email = data.get("email") or conv.get("pending_data", {}).get("email")
-        if email:
-            subs = lookup_subscribers(email)
-            if subs:
-                name_raw = data.get("name") or conv.get("pending_data", {}).get("name") or ""
-                name_match = name_raw.lower().rstrip("'s").rstrip("'s")
-                target = None
+        subs = conv.get("known_kids") or (lookup_subscribers(email) if email else [])
+        if subs:
+            name_raw = data.get("name") or conv.get("pending_data", {}).get("name") or ""
+            name_match = name_raw.lower().rstrip("'s").rstrip("'s")
+            target = None
 
-                # Exact match first
+            # Exact match first
+            for s in subs:
+                if name_match and s["name"].lower() == name_match:
+                    target = s
+                    break
+
+            # Partial/contains match as fallback
+            if not target and name_match:
                 for s in subs:
-                    if name_match and s["name"].lower() == name_match:
+                    if name_match in s["name"].lower() or s["name"].lower() in name_match:
                         target = s
                         break
 
-                # Partial/contains match as fallback
-                if not target and name_match:
-                    for s in subs:
-                        if name_match in s["name"].lower() or s["name"].lower() in name_match:
-                            target = s
-                            break
+            # Single subscriber — no ambiguity
+            if not target and len(subs) == 1:
+                target = subs[0]
 
-                # Single subscriber — no ambiguity
-                if not target and len(subs) == 1:
-                    target = subs[0]
-
-                if target:
-                    conv["pending_data"]["name"] = target["name"]
-                    update_fields = {k: v for k, v in data.items()
-                                     if k not in ("email", "name", "id")}
-                    if update_fields:
-                        update_subscriber(target["id"], update_fields)
-                # If no target found, let Claude's reply stand (it already asked)
-            else:
-                reply = "I couldn't find an active report for that email. Want to create a new one?"
+            if target:
+                conv["pending_data"]["name"] = target["name"]
+                update_fields = {k: v for k, v in data.items()
+                                 if k not in ("email", "name", "id")}
+                if update_fields:
+                    update_subscriber(target["id"], update_fields)
+        else:
+            reply = "I couldn't find an active report linked to this number. What email is the report under?"
 
     elif action == "unsubscribe" and data:
         email = data.get("email")
