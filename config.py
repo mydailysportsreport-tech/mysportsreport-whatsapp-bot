@@ -61,4 +61,4 @@ DEFAULT_NBA_SECTIONS_WITH_TEAM = ["scores", "team_focus", "top_scorers", "standi
 DEFAULT_SOCCER_SECTIONS = ["results", "standings"]
 DEFAULT_MLS_SECTIONS = ["results", "team_focus"]
 
-SETTINGS_URL = "https://mysportsreport.netlify.app/signup.html"
+SETTINGS_URL = "https://mydailysportsreport.com/signup.html"

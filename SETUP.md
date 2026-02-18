@@ -110,7 +110,7 @@ Use the ngrok URL as your webhook URL in the Meta dashboard.
 > Bot: Great taste! I'll set her up with Celtics box scores, NBA scores, standings, and more. What's your email so we can deliver the report?
 > User: maria@gmail.com
 > Bot: Done! ✅ Sofia's Celtics report is all set. She'll get her first report tomorrow morning. Print it out and leave it on the kitchen table!
-> 📎 Edit anytime: https://mysportsreport.netlify.app/signup.html?id=abc123
+> 📎 Edit anytime: https://mydailysportsreport.com/signup.html?id=abc123
 
 **Edit existing:**
 > User: Can you add Premier League to Sofia's report?

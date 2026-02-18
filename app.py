@@ -166,26 +166,47 @@ def handle_message(phone, text):
     conv = get_conversation(phone)
     add_to_history(conv, "user", text)
 
-    # Parse with Claude
-    result = parse_message(text, conv["history"][:-1])  # history without current msg
+    # Parse with Claude (full conversation history gives it context for multi-step flow)
+    result = parse_message(text, conv["history"][:-1])
     reply = result["reply"]
     action = result.get("action")
     data = result.get("data")
+    needs = result.get("needs")
 
-    # Store Claude's reply in history (as the raw reply text for context)
+    # Track what Claude says is still needed
+    if needs:
+        conv["pending_needs"] = needs
+
+    # Accumulate partial data across messages so nothing gets lost
+    if data:
+        pending = conv.get("pending_data", {})
+        for key, val in data.items():
+            if val is not None:
+                pending[key] = val
+        conv["pending_data"] = pending
+
+    # Store Claude's reply in history
     add_to_history(conv, "assistant", reply)
 
     # ── Execute actions ──
 
-    if action == "create" and data:
-        if not data.get("name") or not data.get("email"):
-            return reply  # Claude should ask for missing info
+    if action == "create":
+        # Merge accumulated data with final data
+        final_data = conv.get("pending_data", {})
+        if data:
+            final_data.update(data)
 
-        sub = create_subscriber(data)
+        if not final_data.get("name") or not final_data.get("email"):
+            return reply
+
+        sub = create_subscriber(final_data)
         if sub:
             sub_id = sub.get("id", "")
             manage_url = f"{SETTINGS_URL}?id={sub_id}"
             reply += f"\n\n📎 Edit anytime: {manage_url}"
+            # Clear pending data after successful creation
+            conv["pending_data"] = {}
+            conv["pending_needs"] = []
         else:
             reply = "Hmm, something went wrong saving that. Could you try again?"
 
@@ -217,7 +238,7 @@ def handle_message(phone, text):
         email = data.get("email")
         name = data.get("name")
         if deactivate_subscriber(email=email, name=name):
-            pass  # reply from Claude is already set
+            pass
         else:
             reply = "I couldn't find that subscription. It may already be inactive."
 
@@ -226,7 +247,6 @@ def handle_message(phone, text):
         if email:
             subs = lookup_subscribers(email)
             if subs:
-                names = [s["name"] for s in subs]
                 links = "\n".join(
                     f"• {s['name']}: {SETTINGS_URL}?id={s['id']}"
                     for s in subs
