@@ -300,7 +300,14 @@ def handle_message(phone, text):
     elif action == "feature_request" and data:
         feature = data.get("request", "unknown")
         if ADMIN_PHONE:
-            notify = f"💡 Feature request from {phone}:\n\"{feature}\""
+            kids = conv.get("known_kids", [])
+            if kids:
+                names = ", ".join(k["name"] for k in kids)
+                email = kids[0].get("email", "unknown")
+                who = f"{names} ({email})"
+            else:
+                who = f"phone {phone}"
+            notify = f"💡 Feature request from {who}:\n\"{feature}\""
             send_whatsapp_message(ADMIN_PHONE, notify)
 
     return reply
