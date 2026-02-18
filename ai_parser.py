@@ -77,7 +77,7 @@ CRITICAL: Your entire response must be ONLY a single JSON object. No text before
 
 {{
   "reply": "Your friendly WhatsApp message to the user",
-  "action": null | "create" | "update" | "unsubscribe" | "lookup",
+  "action": null | "create" | "update" | "unsubscribe" | "lookup" | "feature_request",
   "data": null | {{...subscriber config...}},
   "needs": null | ["list", "of", "remaining", "steps"]
 }}
@@ -88,6 +88,7 @@ CRITICAL: Your entire response must be ONLY a single JSON object. No text before
 - **"update"**: Update an existing subscriber. "data" has the fields to change
 - **"unsubscribe"**: Deactivate a subscriber. "data" must have "email" or "name"
 - **"lookup"**: Look up existing subscriber(s) by email
+- **"feature_request"**: User asked for something not currently supported (a sport, league, data type, etc.). Set "data" to {{"request": "brief description of what they asked for"}}. Still reply helpfully — let them know it's not available yet but we'll note the interest.
 
 ### The "needs" field:
 Track what's still missing. Examples: ["favorite_team", "sections", "color_theme", "email", "confirmation"]

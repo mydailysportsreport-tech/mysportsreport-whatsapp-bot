@@ -30,6 +30,7 @@ ACCESS_TOKEN = os.environ.get("WHATSAPP_ACCESS_TOKEN", "")
 PHONE_NUMBER_ID = os.environ.get("WHATSAPP_PHONE_ID", "")
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://mvihwttjfkengswsopfu.supabase.co")
 SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY", "")
+ADMIN_PHONE = os.environ.get("ADMIN_PHONE", "")
 
 # In-memory conversation store (keyed by phone number)
 # In production, you'd use Redis or Supabase for persistence
@@ -295,6 +296,12 @@ def handle_message(phone, text):
                 reply += f"\n\n{links}"
             else:
                 reply = "No active reports found for that email."
+
+    elif action == "feature_request" and data:
+        feature = data.get("request", "unknown")
+        if ADMIN_PHONE:
+            notify = f"💡 Feature request from {phone}:\n\"{feature}\""
+            send_whatsapp_message(ADMIN_PHONE, notify)
 
     return reply
 
