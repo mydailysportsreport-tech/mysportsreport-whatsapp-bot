@@ -215,22 +215,34 @@ def handle_message(phone, text):
         if email:
             subs = lookup_subscribers(email)
             if subs:
-                name_match = data.get("name", "").lower()
+                name_raw = data.get("name") or conv.get("pending_data", {}).get("name") or ""
+                name_match = name_raw.lower().rstrip("'s").rstrip("'s")
                 target = None
+
+                # Exact match first
                 for s in subs:
                     if name_match and s["name"].lower() == name_match:
                         target = s
                         break
+
+                # Partial/contains match as fallback
+                if not target and name_match:
+                    for s in subs:
+                        if name_match in s["name"].lower() or s["name"].lower() in name_match:
+                            target = s
+                            break
+
+                # Single subscriber — no ambiguity
                 if not target and len(subs) == 1:
                     target = subs[0]
 
                 if target:
+                    conv["pending_data"]["name"] = target["name"]
                     update_fields = {k: v for k, v in data.items()
                                      if k not in ("email", "name", "id")}
                     if update_fields:
                         update_subscriber(target["id"], update_fields)
-                else:
-                    reply = "I found multiple reports for that email. Which kid's report do you want to update?"
+                # If no target found, let Claude's reply stand (it already asked)
             else:
                 reply = "I couldn't find an active report for that email. Want to create a new one?"
 

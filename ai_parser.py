@@ -118,6 +118,8 @@ Track what's still missing. Examples: ["favorite_team", "sections", "color_theme
 - For edits, be just as conversational — ask what they want to change, confirm, then update
 - favorite_athlete is optional — if they say "no" or skip it, that's fine
 - When confirming before creation, list: name, sport(s), team(s), sections, favorite athlete (if any), color theme, and email
+- IMPORTANT for updates: When a user has multiple kids on the same email, always include the kid's "name" in the data field so the system can match the right subscriber. If the user says "Tim's" or "Tim's report", use "name": "Tim". If you're unsure which kid, ask — but once you know, always include the name in every update action.
+- When carrying forward an edit across multiple messages (e.g., user says "add Serie A to Tim's", then you ask for email, then they give it), make sure the FINAL update action includes both the name AND the changes. Don't lose the original request.
 """
 
 
