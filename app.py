@@ -274,7 +274,7 @@ def handle_message(phone, text):
             conv["known_kids"].append(sub)
             sub_id = sub.get("id", "")
             manage_url = f"{SETTINGS_URL}?id={sub_id}"
-            reply += f"\n\n📎 Review your selections, reorder sections, or make changes anytime: {manage_url}"
+            reply += f"\n\n📎 If you'd like to review your selections, reorder sections, or make changes, use this link anytime: {manage_url}"
             # Trigger immediate first report
             if sub_id:
                 trigger_report_for_subscriber(sub_id)
