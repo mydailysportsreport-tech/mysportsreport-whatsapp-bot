@@ -31,6 +31,8 @@ PHONE_NUMBER_ID = os.environ.get("WHATSAPP_PHONE_ID", "")
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://mvihwttjfkengswsopfu.supabase.co")
 SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY", "")
 ADMIN_PHONE = os.environ.get("ADMIN_PHONE", "")
+GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", "")
+GITHUB_REPO = os.environ.get("GITHUB_REPO", "mydailysportsreport-tech/sports-reports")
 
 # In-memory conversation store (keyed by phone number)
 # In production, you'd use Redis or Supabase for persistence
@@ -138,6 +140,39 @@ def deactivate_subscriber(email=None, name=None):
     return resp.status_code in (200, 204)
 
 
+# ── GitHub Actions trigger ──
+
+def trigger_report_for_subscriber(subscriber_id):
+    """Dispatch a GitHub Actions workflow to generate and email a single subscriber's report."""
+    if not GITHUB_TOKEN:
+        print("GITHUB_TOKEN not set, skipping report trigger")
+        return False
+
+    url = f"https://api.github.com/repos/{GITHUB_REPO}/actions/workflows/daily-reports.yml/dispatches"
+    headers = {
+        "Authorization": f"Bearer {GITHUB_TOKEN}",
+        "Accept": "application/vnd.github.v3+json",
+    }
+    payload = {
+        "ref": "main",
+        "inputs": {
+            "subscriber_id": subscriber_id,
+        },
+    }
+
+    try:
+        resp = requests.post(url, headers=headers, json=payload, timeout=15)
+        if resp.status_code == 204:
+            print(f"Triggered report workflow for subscriber {subscriber_id}")
+            return True
+        else:
+            print(f"GitHub dispatch error: {resp.status_code} {resp.text}")
+            return False
+    except Exception as e:
+        print(f"GitHub dispatch error: {e}")
+        return False
+
+
 # ── Conversation management ──
 
 def get_conversation(phone):
@@ -235,7 +270,11 @@ def handle_message(phone, text):
             conv["known_kids"].append(sub)
             sub_id = sub.get("id", "")
             manage_url = f"{SETTINGS_URL}?id={sub_id}"
-            reply += f"\n\n📎 Edit anytime: {manage_url}"
+            reply += f"\n\n📎 Review your selections, reorder sections, or make changes anytime: {manage_url}"
+            # Trigger immediate first report
+            if sub_id:
+                trigger_report_for_subscriber(sub_id)
+                reply += "\n\n📬 Your first report is being generated now — check your inbox in a few minutes!"
             # Clear pending data after successful creation
             conv["pending_data"] = {}
             conv["pending_needs"] = []
@@ -359,6 +398,29 @@ def webhook():
         traceback.print_exc()
 
     return "OK", 200
+
+
+@app.route("/trigger-report", methods=["POST", "OPTIONS"])
+def trigger_report():
+    """Trigger an immediate report for a newly signed-up subscriber."""
+    if request.method == "OPTIONS":
+        resp = jsonify({"ok": True})
+        resp.headers["Access-Control-Allow-Origin"] = "*"
+        resp.headers["Access-Control-Allow-Methods"] = "POST, OPTIONS"
+        resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
+        return resp, 200
+
+    data = request.get_json()
+    sub_id = data.get("subscriber_id") if data else None
+    if not sub_id:
+        resp = jsonify({"error": "subscriber_id required"})
+        resp.headers["Access-Control-Allow-Origin"] = "*"
+        return resp, 400
+
+    ok = trigger_report_for_subscriber(sub_id)
+    resp = jsonify({"triggered": ok})
+    resp.headers["Access-Control-Allow-Origin"] = "*"
+    return resp, 200 if ok else 500
 
 
 @app.route("/", methods=["GET", "HEAD"])
