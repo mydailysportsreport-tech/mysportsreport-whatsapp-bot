@@ -269,6 +269,11 @@ def handle_message(phone, text):
         if not final_data.get("name") or not final_data.get("email"):
             return reply
 
+        # Safety check: email must have been explicitly provided, not fabricated
+        email = final_data["email"]
+        if "@" not in email or "." not in email.split("@")[-1]:
+            return "I need a valid email address to send the report to. What email should I use?"
+
         sub = create_subscriber(final_data, phone=phone)
         if sub:
             conv["known_kids"].append(sub)
