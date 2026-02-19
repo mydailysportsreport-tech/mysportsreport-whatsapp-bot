@@ -39,6 +39,10 @@ GITHUB_REPO = os.environ.get("GITHUB_REPO", "mydailysportsreport-tech/sports-rep
 conversations = {}
 CONVERSATION_TTL = 1800  # 30 minutes
 
+# Deduplication: track recently processed message IDs to ignore webhook retries
+processed_messages = {}
+DEDUP_TTL = 120  # 2 minutes
+
 
 # ── WhatsApp API helpers ──
 
@@ -274,7 +278,6 @@ def handle_message(phone, text):
             # Trigger immediate first report
             if sub_id:
                 trigger_report_for_subscriber(sub_id)
-                reply += "\n\n📬 Your first report is being generated now — check your inbox in a few minutes!"
             # Clear pending data after successful creation
             conv["pending_data"] = {}
             conv["pending_needs"] = []
@@ -384,6 +387,18 @@ def webhook():
                 for msg in messages:
                     if msg.get("type") != "text":
                         continue
+
+                    msg_id = msg.get("id", "")
+                    if msg_id:
+                        now = time.time()
+                        if msg_id in processed_messages and now - processed_messages[msg_id] < DEDUP_TTL:
+                            print(f"[dedup] Skipping duplicate message {msg_id}")
+                            continue
+                        processed_messages[msg_id] = now
+                        # Clean old entries
+                        for k in list(processed_messages):
+                            if now - processed_messages[k] > DEDUP_TTL:
+                                del processed_messages[k]
 
                     phone = msg["from"]
                     text = msg["text"]["body"]
