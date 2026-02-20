@@ -38,7 +38,7 @@ SOCCER_SECTIONS = ["results", "today_matches", "standings"]
 
 SOCCER_SECTION_LABELS = {
     "results": "Yesterday's Results",
-    "today_matches": "Today's Fixtures",
+    "today_matches": "Today's Matches",
     "standings": "Standings",
 }
 
