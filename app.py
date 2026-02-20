@@ -44,6 +44,47 @@ processed_messages = {}
 DEDUP_TTL = 120  # 2 minutes
 
 
+# ── Sports config merge helper ──
+
+def merge_sports_config(existing, incoming):
+    """Merge incoming sports config into existing, preserving preferences not in the update.
+
+    For each sport in incoming:
+      - If it already exists (matched by "sport" key): union leagues/sections, update other fields
+      - If it's new: append it
+    Sports in existing but not in incoming are kept as-is.
+    """
+    existing_by_sport = {s["sport"]: dict(s) for s in (existing or [])}
+
+    for inc in (incoming or []):
+        sport_key = inc.get("sport")
+        if not sport_key:
+            continue
+
+        if sport_key in existing_by_sport:
+            merged = existing_by_sport[sport_key]
+
+            if "leagues" in inc:
+                old_leagues = merged.get("leagues", [])
+                merged["leagues"] = list(dict.fromkeys(old_leagues + inc["leagues"]))
+
+            if "sections" in inc:
+                old_sections = merged.get("sections", [])
+                merged["sections"] = list(dict.fromkeys(old_sections + inc["sections"]))
+
+            if "favorite_team" in inc and inc["favorite_team"]:
+                merged["favorite_team"] = inc["favorite_team"]
+
+            if "options" in inc and inc["options"]:
+                merged.setdefault("options", {}).update(inc["options"])
+
+            existing_by_sport[sport_key] = merged
+        else:
+            existing_by_sport[sport_key] = dict(inc)
+
+    return list(existing_by_sport.values())
+
+
 # ── WhatsApp API helpers ──
 
 def send_whatsapp_message(to, text):
@@ -318,6 +359,10 @@ def handle_message(phone, text):
                 conv["pending_data"]["name"] = target["name"]
                 update_fields = {k: v for k, v in data.items()
                                  if k not in ("email", "name", "id")}
+                if "sports" in update_fields and target.get("sports"):
+                    update_fields["sports"] = merge_sports_config(
+                        target["sports"], update_fields["sports"]
+                    )
                 if update_fields:
                     update_subscriber(target["id"], update_fields)
                     trigger_report_for_subscriber(target["id"])
