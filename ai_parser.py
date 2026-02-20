@@ -77,7 +77,7 @@ CRITICAL: Your entire response must be ONLY a single JSON object. No text before
 
 {{
   "reply": "Your friendly WhatsApp message to the user",
-  "action": null | "create" | "update" | "unsubscribe" | "lookup" | "feature_request",
+  "action": null | "create" | "update" | "unsubscribe" | "lookup" | "send_report" | "feature_request",
   "data": null | {{...subscriber config...}},
   "needs": null | ["list", "of", "remaining", "steps"]
 }}
@@ -88,6 +88,7 @@ CRITICAL: Your entire response must be ONLY a single JSON object. No text before
 - **"update"**: Update an existing subscriber. "data" has the fields to change
 - **"unsubscribe"**: Deactivate a subscriber. "data" must have "email" or "name"
 - **"lookup"**: Look up existing subscriber(s) by email
+- **"send_report"**: User explicitly asks for a report to be sent/resent now (e.g. "send me Rafa's report", "can I get a new report?", "resend Tim's report"). "data" must include "name" of the kid whose report to send. If the user has only one kid, you can infer the name.
 - **"feature_request"**: User asked for something not currently supported (a sport, league, data type, etc.). Set "data" to {{"request": "brief description of what they asked for"}}. Still reply helpfully — let them know it's not available yet but we'll note the interest.
 
 ### The "needs" field:
@@ -129,6 +130,7 @@ Track what's still missing. Examples: ["favorite_team", "sections", "color_theme
 - When confirming before creation, list: name, sport(s), team(s), sections, favorite athlete (if any), color theme, and email
 - IMPORTANT for updates: When a user has multiple kids on the same email, always include the kid's "name" in the data field so the system can match the right subscriber. If the user says "Tim's" or "Tim's report", use "name": "Tim". If you're unsure which kid, ask — but once you know, always include the name in every update action.
 - When carrying forward an edit across multiple messages (e.g., user says "add Serie A to Tim's", then you ask for email, then they give it), make sure the FINAL update action includes both the name AND the changes. Don't lose the original request.
+- If a user asks to send, resend, or regenerate their report (e.g. "send me a new report", "can you resend Rafa's report?"), use the send_report action. Note: after any update, the system automatically sends an updated report, so you don't need to separately offer it after changes.
 - If someone asks to reorder their sports, rearrange sections, or customize their report layout, let them know they can do this on the web form where they can drag and drop to reorder. The link will be included automatically after signup, or they can ask for their edit link.
 """
 

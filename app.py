@@ -320,6 +320,8 @@ def handle_message(phone, text):
                                  if k not in ("email", "name", "id")}
                 if update_fields:
                     update_subscriber(target["id"], update_fields)
+                    trigger_report_for_subscriber(target["id"])
+                    reply += "\n\n📬 I've also sent an updated report with your changes — check your inbox in a few minutes!"
         else:
             reply = "I couldn't find an active report linked to this number. What email is the report under?"
 
@@ -343,6 +345,32 @@ def handle_message(phone, text):
                 reply += f"\n\n{links}"
             else:
                 reply = "No active reports found for that email."
+
+    elif action == "send_report" and data:
+        email = data.get("email") or conv.get("pending_data", {}).get("email")
+        subs = conv.get("known_kids") or (lookup_subscribers(email) if email else [])
+        name_raw = data.get("name", "")
+        name_match = name_raw.lower().rstrip("'s").rstrip("'s")
+        target = None
+        for s in subs:
+            if name_match and s["name"].lower() == name_match:
+                target = s
+                break
+        if not target and name_match:
+            for s in subs:
+                if name_match in s["name"].lower() or s["name"].lower() in name_match:
+                    target = s
+                    break
+        if not target and len(subs) == 1:
+            target = subs[0]
+        if target:
+            ok = trigger_report_for_subscriber(target["id"])
+            if ok:
+                reply += f"\n\n📬 Generating {target['name']}'s report now — check your inbox in a few minutes!"
+            else:
+                reply += "\n\nHmm, something went wrong triggering the report. Try again in a bit."
+        else:
+            reply = "I couldn't find a matching report. Which kid's report should I send?"
 
     elif action == "feature_request" and data:
         feature = data.get("request", "unknown")
