@@ -165,6 +165,16 @@ def lookup_by_phone(phone):
     return []
 
 
+def fetch_subscriber_by_id(sub_id):
+    """Fetch a single subscriber's current data from Supabase."""
+    url = f"{SUPABASE_URL}/rest/v1/subscribers?id=eq.{sub_id}&select=id,name,email,sports,color_theme,favorite_athlete,phone"
+    resp = requests.get(url, headers=supabase_headers(), timeout=15)
+    if resp.status_code == 200:
+        rows = resp.json()
+        return rows[0] if rows else None
+    return None
+
+
 def update_subscriber(sub_id, data):
     """Update an existing subscriber in Supabase."""
     url = f"{SUPABASE_URL}/rest/v1/subscribers?id=eq.{sub_id}"
@@ -263,9 +273,9 @@ def handle_message(phone, text):
         if kids:
             conv["pending_data"]["email"] = kids[0]["email"]
 
-    # Build context about known kids for Claude (inject on first message only)
+    # Build context about known kids for Claude (inject on every message)
     known_kids_context = ""
-    if conv.get("known_kids") and len(conv["history"]) == 0:
+    if conv.get("known_kids"):
         kids_list = ", ".join(k["name"] for k in conv["known_kids"])
         email = conv["known_kids"][0]["email"]
         known_kids_context = (
@@ -283,6 +293,9 @@ def handle_message(phone, text):
     action = result.get("action")
     data = result.get("data")
     needs = result.get("needs")
+
+    if action:
+        print(f"[claude] action={action} data={json.dumps(data, default=str)[:500] if data else 'null'}")
 
     # Track what Claude says is still needed
     if needs:
@@ -359,11 +372,16 @@ def handle_message(phone, text):
                 conv["pending_data"]["name"] = target["name"]
                 update_fields = {k: v for k, v in data.items()
                                  if k not in ("email", "name", "id")}
-                if "sports" in update_fields and target.get("sports"):
-                    update_fields["sports"] = merge_sports_config(
-                        target["sports"], update_fields["sports"]
-                    )
+                if "sports" in update_fields:
+                    fresh = fetch_subscriber_by_id(target["id"])
+                    existing_sports = (fresh or target).get("sports", [])
+                    if existing_sports:
+                        update_fields["sports"] = merge_sports_config(
+                            existing_sports, update_fields["sports"]
+                        )
+                    print(f"[merge] Merged sports for {target['name']}: {json.dumps(update_fields['sports'], default=str)[:500]}")
                 if update_fields:
+                    print(f"[update] {target['name']}: {json.dumps(update_fields, default=str)[:500]}")
                     update_subscriber(target["id"], update_fields)
                     trigger_report_for_subscriber(target["id"])
                     reply += "\n\n📬 I've also sent an updated report with your changes — check your inbox in a few minutes!"
@@ -394,7 +412,7 @@ def handle_message(phone, text):
     elif action == "send_report" and data:
         email = data.get("email") or conv.get("pending_data", {}).get("email")
         subs = conv.get("known_kids") or (lookup_subscribers(email) if email else [])
-        name_raw = data.get("name", "")
+        name_raw = data.get("name") or conv.get("pending_data", {}).get("name") or ""
         name_match = name_raw.lower().rstrip("'s").rstrip("'s")
         target = None
         for s in subs:

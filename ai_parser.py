@@ -131,6 +131,9 @@ Track what's still missing. Examples: ["favorite_team", "sections", "color_theme
 - IMPORTANT for updates: When a user has multiple kids on the same email, always include the kid's "name" in the data field so the system can match the right subscriber. If the user says "Tim's" or "Tim's report", use "name": "Tim". If you're unsure which kid, ask — but once you know, always include the name in every update action.
 - When carrying forward an edit across multiple messages (e.g., user says "add Serie A to Tim's", then you ask for email, then they give it), make sure the FINAL update action includes both the name AND the changes. Don't lose the original request.
 - If a user asks to send, resend, or regenerate their report (e.g. "send me a new report", "can you resend Rafa's report?"), use the send_report action. Note: after any update, the system automatically sends an updated report, so you don't need to separately offer it after changes.
+- CRITICAL for updates: When updating a subscriber's sports config (adding a league, changing sections, etc.), the "data" field MUST include a "sports" array structured EXACTLY like the create format. For example, to add Bundesliga to a kid's soccer config:
+  "data": {{"name": "Teddy", "sports": [{{"sport": "soccer", "leagues": ["Bundesliga"]}}]}}
+  The system will MERGE this into the existing config — it won't overwrite. So you only need to include the sport and the fields being changed. Do NOT put leagues or sections as top-level fields in data — they MUST be inside a sports array entry.
 - If someone asks to reorder their sports, rearrange sections, or customize their report layout, let them know they can do this on the web form where they can drag and drop to reorder. The link will be included automatically after signup, or they can ask for their edit link.
 """
 
