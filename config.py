@@ -49,17 +49,25 @@ MLS_TEAMS = [
     "Minnesota United", "Montreal", "Nashville SC", "New England Revolution",
     "New York City FC", "New York Red Bulls", "Orlando City",
     "Philadelphia Union", "Portland Timbers", "Real Salt Lake",
-    "San Jose Earthquakes", "Seattle Sounders", "Sporting KC",
+    "San Diego FC", "San Jose Earthquakes", "Seattle Sounders", "Sporting KC",
     "St. Louis City", "Toronto FC", "Vancouver Whitecaps",
 ]
 
-MLS_SECTIONS = ["results", "team_focus"]
+MLS_SECTIONS = ["results", "today_matches", "standings", "team_focus"]
+
+MLS_SECTION_LABELS = {
+    "results": "Yesterday's Results",
+    "today_matches": "Today's Matches",
+    "standings": "Standings",
+    "team_focus": "Team Focus",
+}
 
 COLOR_THEMES = ["blue", "green", "red", "purple", "gold", "navy"]
 
 DEFAULT_NBA_SECTIONS = ["scores", "top_scorers", "standings", "todays_games"]
 DEFAULT_NBA_SECTIONS_WITH_TEAM = ["scores", "team_focus", "top_scorers", "standings", "todays_games"]
 DEFAULT_SOCCER_SECTIONS = ["results", "standings"]
-DEFAULT_MLS_SECTIONS = ["results", "team_focus"]
+DEFAULT_MLS_SECTIONS = ["results", "today_matches", "standings"]
+DEFAULT_MLS_SECTIONS_WITH_TEAM = ["results", "today_matches", "standings", "team_focus"]
 
 SETTINGS_URL = "https://mydailysportsreport.com/signup.html"
