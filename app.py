@@ -435,7 +435,12 @@ def handle_message(phone, text):
         email = data.get("email") or conv.get("pending_data", {}).get("email")
         subs = conv.get("known_kids") or (lookup_subscribers(email) if email else [])
         if subs:
-            # If we already have config data, build a readable summary
+            # Cache subscribers so subsequent messages can find them
+            if not conv.get("known_kids"):
+                conv["known_kids"] = subs
+                if subs[0].get("email"):
+                    conv["pending_data"]["email"] = subs[0]["email"]
+
             name_filter = (data.get("name") or "").lower()
             targets = subs
             if name_filter:
@@ -466,7 +471,13 @@ def handle_message(phone, text):
                 f"✏️ Edit {s['name']}: {SETTINGS_URL}?id={s['id']}"
                 for s in targets
             )
-            reply = f"Here's what's currently set up:\n\n{config_text}\n\n{edit_links}"
+            config_summary = f"Here's what's currently set up:\n\n{config_text}\n\n{edit_links}"
+
+            # Only replace Claude's reply if it's a genuine "show my config"
+            # request. If Claude is mid-flow (asking questions, helping with
+            # changes), preserve its reply and skip the config dump.
+            if "?" not in reply:
+                reply = config_summary
         else:
             reply = "No active reports found for that email."
 
