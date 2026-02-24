@@ -10,9 +10,15 @@ import anthropic
 from config import (
     NBA_TEAMS, NBA_SECTIONS, NBA_SECTION_LABELS,
     SOCCER_LEAGUES, SOCCER_SECTIONS, SOCCER_SECTION_LABELS,
-    MLS_TEAMS, MLS_SECTIONS, COLOR_THEMES,
+    MLS_TEAMS, MLS_SECTIONS, MLS_SECTION_LABELS, COLOR_THEMES,
+    MLB_TEAMS, MLB_DIVISIONS, MLB_SECTIONS, MLB_SECTION_LABELS,
+    WNBA_TEAMS, WNBA_SECTIONS, WNBA_SECTION_LABELS,
+    NWSL_TEAMS, NWSL_SECTIONS, NWSL_SECTION_LABELS,
     DEFAULT_NBA_SECTIONS, DEFAULT_NBA_SECTIONS_WITH_TEAM,
-    DEFAULT_SOCCER_SECTIONS, DEFAULT_MLS_SECTIONS,
+    DEFAULT_SOCCER_SECTIONS, DEFAULT_MLS_SECTIONS, DEFAULT_MLS_SECTIONS_WITH_TEAM,
+    DEFAULT_MLB_SECTIONS, DEFAULT_MLB_SECTIONS_WITH_TEAM,
+    DEFAULT_WNBA_SECTIONS, DEFAULT_WNBA_SECTIONS_WITH_TEAM,
+    DEFAULT_NWSL_SECTIONS, DEFAULT_NWSL_SECTIONS_WITH_TEAM,
 )
 
 client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY", ""))
@@ -41,8 +47,31 @@ Default sections: {json.dumps(DEFAULT_SOCCER_SECTIONS)}
 
 ### MLS
 Teams: {json.dumps(MLS_TEAMS)}
-Sections: results, team_focus
-Default sections: {json.dumps(DEFAULT_MLS_SECTIONS)}
+Sections: {json.dumps(MLS_SECTION_LABELS)}
+Default sections (no team): {json.dumps(DEFAULT_MLS_SECTIONS)}
+Default sections (with team): {json.dumps(DEFAULT_MLS_SECTIONS_WITH_TEAM)}
+
+### MLB
+Teams: {json.dumps(MLB_TEAMS)}
+Divisions (for standings): {json.dumps(MLB_DIVISIONS)}
+Sections: {json.dumps(MLB_SECTION_LABELS)}
+Default sections (no team): {json.dumps(DEFAULT_MLB_SECTIONS)}
+Default sections (with team): {json.dumps(DEFAULT_MLB_SECTIONS_WITH_TEAM)}
+When signing up for MLB, ask which division(s) they want standings for.
+
+### WNBA (currently in offseason — season starts May 16)
+Teams: {json.dumps(WNBA_TEAMS)}
+Sections: {json.dumps(WNBA_SECTION_LABELS)}
+Default sections (offseason): {json.dumps(DEFAULT_WNBA_SECTIONS)}
+Default sections (in-season, no team): ["scores", "standings", "todays_games"]
+Default sections (in-season, with team): ["scores", "standings", "todays_games", "team_focus"]
+Note: During the offseason, subscribers get curated news updates from ESPN. When the season starts, the system automatically expands their sections to include live scores, standings, and games.
+
+### NWSL (currently in-season — started March 14)
+Teams: {json.dumps(NWSL_TEAMS)}
+Sections: {json.dumps(NWSL_SECTION_LABELS)}
+Default sections (no team): ["results", "today_matches", "standings"]
+Default sections (with team): ["results", "today_matches", "standings", "team_focus"]
 
 ### Color Themes
 Available: {json.dumps(COLOR_THEMES)}
@@ -124,7 +153,7 @@ Track what's still missing. Examples: ["favorite_team", "sections", "color_theme
 - When listing options (sections, leagues, etc.), use a clean numbered list or bullet points
 - If they say something like "my son loves the Lakers," infer NBA + Lakers as favorite team, then move on to next step
 - For team names, always use the official full name in the data (e.g., "Los Angeles Lakers" not just "Lakers")
-- If someone mentions a sport you don't support yet, let them know what's currently available (NBA, European Soccer, MLS)
+- If someone mentions a sport you don't support yet, let them know what's currently available (NBA, European Soccer, MLS, MLB, WNBA, NWSL)
 - For edits, be just as conversational — ask what they want to change, confirm, then update
 - favorite_athlete is optional — if they say "no" or skip it, that's fine
 - When confirming before creation, list: name, sport(s), team(s), sections, favorite athlete (if any), color theme, and email

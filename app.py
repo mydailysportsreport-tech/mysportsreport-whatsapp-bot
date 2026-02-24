@@ -296,10 +296,27 @@ def handle_message(phone, text):
     if conv.get("known_kids"):
         kids_list = ", ".join(k["name"] for k in conv["known_kids"])
         email = conv["known_kids"][0]["email"]
+        kids_detail = []
+        for k in conv["known_kids"]:
+            sports_desc = []
+            for s in (k.get("sports") or []):
+                sport_name = s.get("sport", "unknown")
+                parts = [sport_name.upper()]
+                if s.get("favorite_team"):
+                    parts.append(f"favorite team: {s['favorite_team']}")
+                if s.get("leagues"):
+                    parts.append(f"leagues: {', '.join(s['leagues'])}")
+                if s.get("sections"):
+                    parts.append(f"sections: {', '.join(s['sections'])}")
+                sports_desc.append(" | ".join(parts))
+            sports_str = "; ".join(sports_desc) if sports_desc else "no sports configured"
+            kids_detail.append(f"  - {k['name']}: {sports_str}")
+        kids_block = "\n".join(kids_detail)
         known_kids_context = (
             f"\n[SYSTEM: This parent's phone is linked to these existing reports: "
             f"{kids_list} (email: {email}). You do NOT need to ask for their email. "
-            f"For updates, you already know which kids they have.]"
+            f"For updates, you already know which kids they have.\n"
+            f"Current configurations:\n{kids_block}]"
         )
 
     msg_for_claude = text + known_kids_context
