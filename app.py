@@ -435,11 +435,38 @@ def handle_message(phone, text):
         email = data.get("email") or conv.get("pending_data", {}).get("email")
         subs = conv.get("known_kids") or (lookup_subscribers(email) if email else [])
         if subs:
-            links = "\n".join(
-                f"• {s['name']}: {SETTINGS_URL}?id={s['id']}"
-                for s in subs
+            # If we already have config data, build a readable summary
+            name_filter = (data.get("name") or "").lower()
+            targets = subs
+            if name_filter:
+                targets = [s for s in subs if name_filter in s["name"].lower()] or subs
+
+            summaries = []
+            for s in targets:
+                sports = s.get("sports") or []
+                if sports:
+                    sport_parts = []
+                    for sp in sports:
+                        desc = sp.get("sport", "").upper()
+                        if sp.get("favorite_team"):
+                            desc += f" (favorite team: {sp['favorite_team']})"
+                        if sp.get("leagues"):
+                            desc += f" — {', '.join(sp['leagues'])}"
+                        secs = sp.get("sections", [])
+                        if secs:
+                            desc += f"\n  Sections: {', '.join(secs)}"
+                        sport_parts.append(desc)
+                    summary = f"*{s['name']}*:\n" + "\n".join(f"• {p}" for p in sport_parts)
+                else:
+                    summary = f"*{s['name']}*: No sports configured yet"
+                summaries.append(summary)
+
+            config_text = "\n\n".join(summaries)
+            edit_links = "\n".join(
+                f"✏️ Edit {s['name']}: {SETTINGS_URL}?id={s['id']}"
+                for s in targets
             )
-            reply += f"\n\n{links}"
+            reply = f"Here's what's currently set up:\n\n{config_text}\n\n{edit_links}"
         else:
             reply = "No active reports found for that email."
 
