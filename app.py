@@ -87,6 +87,24 @@ def merge_sports_config(existing, incoming):
 
 # ── WhatsApp API helpers ──
 
+def log_message(phone, direction, body, subscriber_names=None):
+    """Persist a chat message to the Supabase chat_log table."""
+    if not SUPABASE_SERVICE_KEY:
+        return
+    try:
+        url = f"{SUPABASE_URL}/rest/v1/chat_log"
+        payload = {
+            "phone": phone,
+            "direction": direction,
+            "body": body[:4000],
+        }
+        if subscriber_names:
+            payload["subscriber_names"] = subscriber_names
+        requests.post(url, headers=supabase_headers(), json=payload, timeout=5)
+    except Exception as e:
+        print(f"Chat log error: {e}")
+
+
 def send_whatsapp_message(to, text):
     """Send a text message via the WhatsApp Cloud API."""
     if not ACCESS_TOKEN or not PHONE_NUMBER_ID:
@@ -500,7 +518,13 @@ def webhook():
                     text = msg["text"]["body"]
                     print(f"[{phone}] {text}")
 
+                    # Resolve subscriber names for the log
+                    kids = lookup_by_phone(phone)
+                    names_str = ", ".join(k["name"] for k in kids) if kids else None
+
+                    log_message(phone, "inbound", text, names_str)
                     reply = handle_message(phone, text)
+                    log_message(phone, "outbound", reply, names_str)
                     send_whatsapp_message(phone, reply)
 
     except Exception as e:

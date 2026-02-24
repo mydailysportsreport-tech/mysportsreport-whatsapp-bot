@@ -62,6 +62,66 @@ MLS_SECTION_LABELS = {
     "team_focus": "Team Focus",
 }
 
+MLB_TEAMS = [
+    "Arizona Diamondbacks", "Athletics", "Atlanta Braves", "Baltimore Orioles",
+    "Boston Red Sox", "Chicago Cubs", "Chicago White Sox", "Cincinnati Reds",
+    "Cleveland Guardians", "Colorado Rockies", "Detroit Tigers", "Houston Astros",
+    "Kansas City Royals", "Los Angeles Angels", "Los Angeles Dodgers", "Miami Marlins",
+    "Milwaukee Brewers", "Minnesota Twins", "New York Mets", "New York Yankees",
+    "Philadelphia Phillies", "Pittsburgh Pirates", "San Diego Padres",
+    "San Francisco Giants", "Seattle Mariners", "St. Louis Cardinals",
+    "Tampa Bay Rays", "Texas Rangers", "Toronto Blue Jays", "Washington Nationals",
+]
+
+MLB_DIVISIONS = [
+    "AL East", "AL Central", "AL West",
+    "NL East", "NL Central", "NL West",
+]
+
+MLB_SECTIONS = ["results", "todays_games", "standings", "team_focus"]
+
+MLB_SECTION_LABELS = {
+    "results": "Yesterday's Scores",
+    "todays_games": "Today's Games",
+    "standings": "Standings",
+    "team_focus": "Team Focus",
+}
+
+WNBA_TEAMS = [
+    "Atlanta Dream", "Chicago Sky", "Connecticut Sun", "Dallas Wings",
+    "Golden State Valkyries", "Indiana Fever", "Las Vegas Aces",
+    "Los Angeles Sparks", "Minnesota Lynx", "New York Liberty",
+    "Phoenix Mercury", "Seattle Storm", "Washington Mystics",
+]
+
+WNBA_SECTIONS = ["offseason_news", "scores", "standings", "todays_games", "team_focus"]
+
+WNBA_SECTION_LABELS = {
+    "offseason_news": "Offseason News",
+    "scores": "Yesterday's Scores",
+    "standings": "Standings",
+    "todays_games": "Today's Games",
+    "team_focus": "Team Focus",
+}
+
+NWSL_TEAMS = [
+    "Angel City FC", "Bay FC", "Chicago Red Stars", "Houston Dash",
+    "Kansas City Current", "North Carolina Courage", "NJ/NY Gotham FC",
+    "Orlando Pride", "Portland Thorns FC", "Racing Louisville FC",
+    "San Diego Wave FC", "Seattle Reign FC", "Utah Royals FC",
+    "Washington Spirit",
+]
+
+NWSL_SECTIONS = ["offseason_news", "results", "today_matches", "standings", "team_focus"]
+
+NWSL_SECTION_LABELS = {
+    "offseason_news": "Offseason News",
+    "results": "Yesterday's Results",
+    "today_matches": "Today's Matches",
+    "standings": "Standings",
+    "team_focus": "Team Focus",
+}
+
 COLOR_THEMES = ["blue", "green", "red", "purple", "gold", "navy"]
 
 DEFAULT_NBA_SECTIONS = ["scores", "top_scorers", "standings", "todays_games"]
@@ -69,5 +129,11 @@ DEFAULT_NBA_SECTIONS_WITH_TEAM = ["scores", "team_focus", "top_scorers", "standi
 DEFAULT_SOCCER_SECTIONS = ["results", "standings"]
 DEFAULT_MLS_SECTIONS = ["results", "today_matches", "standings"]
 DEFAULT_MLS_SECTIONS_WITH_TEAM = ["results", "today_matches", "standings", "team_focus"]
+DEFAULT_MLB_SECTIONS = ["results", "todays_games", "standings"]
+DEFAULT_MLB_SECTIONS_WITH_TEAM = ["results", "todays_games", "standings", "team_focus"]
+DEFAULT_WNBA_SECTIONS = ["offseason_news"]
+DEFAULT_WNBA_SECTIONS_WITH_TEAM = ["offseason_news", "team_focus"]
+DEFAULT_NWSL_SECTIONS = ["offseason_news"]
+DEFAULT_NWSL_SECTIONS_WITH_TEAM = ["offseason_news", "team_focus"]
 
 SETTINGS_URL = "https://mydailysportsreport.com/signup.html"
