@@ -432,17 +432,16 @@ def handle_message(phone, text):
             reply = "I couldn't find that subscription. It may already be inactive."
 
     elif action == "lookup" and data:
-        email = data.get("email")
-        if email:
-            subs = lookup_subscribers(email)
-            if subs:
-                links = "\n".join(
-                    f"• {s['name']}: {SETTINGS_URL}?id={s['id']}"
-                    for s in subs
-                )
-                reply += f"\n\n{links}"
-            else:
-                reply = "No active reports found for that email."
+        email = data.get("email") or conv.get("pending_data", {}).get("email")
+        subs = conv.get("known_kids") or (lookup_subscribers(email) if email else [])
+        if subs:
+            links = "\n".join(
+                f"• {s['name']}: {SETTINGS_URL}?id={s['id']}"
+                for s in subs
+            )
+            reply += f"\n\n{links}"
+        else:
+            reply = "No active reports found for that email."
 
     elif action == "send_report" and data:
         email = data.get("email") or conv.get("pending_data", {}).get("email")
