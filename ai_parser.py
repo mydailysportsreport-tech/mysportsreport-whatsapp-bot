@@ -15,6 +15,7 @@ from config import (
     NFL_TEAMS, NFL_DIVISIONS, NFL_SECTIONS, NFL_SECTION_LABELS,
     WNBA_TEAMS, WNBA_SECTIONS, WNBA_SECTION_LABELS,
     NWSL_TEAMS, NWSL_SECTIONS, NWSL_SECTION_LABELS,
+    REPORT_STYLES, REPORT_STYLE_LABELS,
     DEFAULT_NBA_SECTIONS, DEFAULT_NBA_SECTIONS_WITH_TEAM,
     DEFAULT_SOCCER_SECTIONS, DEFAULT_MLS_SECTIONS, DEFAULT_MLS_SECTIONS_WITH_TEAM,
     DEFAULT_MLB_SECTIONS, DEFAULT_MLB_SECTIONS_WITH_TEAM,
@@ -87,6 +88,11 @@ Default sections (with team): ["results", "today_matches", "standings", "team_fo
 ### Color Themes
 Available: {json.dumps(COLOR_THEMES)}
 
+### Report Styles (PDF layout theme)
+Available: {json.dumps(REPORT_STYLE_LABELS)}
+Default: "modern"
+This controls the visual layout/design of the printed PDF report. Color theme (above) controls email accent colors. They are separate choices.
+
 ## Conversation Flow for New Signups
 
 Guide parents through signup step by step. Do NOT rush — ask one or two questions at a time. Follow this general order:
@@ -95,7 +101,7 @@ Guide parents through signup step by step. Do NOT rush — ask one or two questi
 2. **Favorite team(s)**: For each sport, ask about a favorite team. e.g. "Does [name] have a favorite NBA team?" or "Which soccer leagues should we include — Premier League, La Liga, Serie A, etc.?"
 3. **Sections/data**: Explain what's available and ask what they'd like. e.g. "For NBA, we can include: Yesterday's Scores, Team Box Score, Top Scorers, Standings, Stat Leaders, Today's Games, and a 3-Point Leader tracker. Want all of those, or just some?"
 4. **Favorite athlete**: "Does [name] have a favorite player? We'll put their photo on the report — nice personal touch 🏀"
-5. **Color theme**: "Last thing — pick a color theme for the report: blue, green, red, purple, gold, or navy?"
+5. **Color theme & report style**: "Pick a color theme for the email: blue, green, red, purple, gold, or navy? And a report style for the printed PDF — Modern (default), Newspaper, Vintage, Vintage Dark, or Kids?"
 6. **Email**: "Perfect! What email should we send it to?" — You MUST ask for the email. NEVER guess or make up an email address. The ONLY exception is if a [SYSTEM: ...] note tells you the parent's phone is already linked to an email — in that case, use that email.
 7. **Confirm**: Summarize everything back and ask for confirmation before creating. When confirming the signup is complete, tell them their **first report is being generated now and to check their inbox in a few minutes**. After that, reports will arrive every morning. Do NOT say "starting tomorrow" — they get the first one right away. Also remind them they can **message you here on WhatsApp anytime** to make changes (add sports, switch teams, update sections, etc.).
 
@@ -133,13 +139,14 @@ CRITICAL: Your entire response must be ONLY a single JSON object. No text before
 - **"feature_request"**: User asked for something not currently supported (a sport, league, data type, etc.). Set "data" to {{"request": "brief description of what they asked for"}}. Still reply helpfully — let them know it's not available yet but we'll note the interest.
 
 ### The "needs" field:
-Track what's still missing. Examples: ["favorite_team", "sections", "color_theme", "email", "confirmation"]
+Track what's still missing. Examples: ["favorite_team", "sections", "color_theme", "report_style", "email", "confirmation"]
 
 ### Subscriber data format (for create):
 {{
   "name": "Kid's first name",
   "email": "parent@email.com",
   "color_theme": "blue",
+  "html_theme": "modern",
   "favorite_athlete": "Shai Gilgeous-Alexander",
   "sports": [
     {{

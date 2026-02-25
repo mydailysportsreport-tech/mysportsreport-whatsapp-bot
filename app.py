@@ -150,6 +150,7 @@ def create_subscriber(data, phone=""):
         "email": data["email"],
         "parent_email": data["email"],
         "color_theme": data.get("color_theme", "blue"),
+        "html_theme": data.get("html_theme", "modern"),
         "favorite_athlete": data.get("favorite_athlete", ""),
         "sports": data.get("sports", []),
         "phone": phone,
@@ -167,7 +168,7 @@ def create_subscriber(data, phone=""):
 
 def lookup_subscribers(email):
     """Look up active subscribers by email."""
-    url = f"{SUPABASE_URL}/rest/v1/subscribers?email=eq.{email}&active=eq.true&select=id,name,email,sports,color_theme,favorite_athlete,phone"
+    url = f"{SUPABASE_URL}/rest/v1/subscribers?email=eq.{email}&active=eq.true&select=id,name,email,sports,color_theme,html_theme,favorite_athlete,phone"
     resp = requests.get(url, headers=supabase_headers(), timeout=15)
     if resp.status_code == 200:
         return resp.json()
@@ -176,7 +177,7 @@ def lookup_subscribers(email):
 
 def lookup_by_phone(phone):
     """Look up active subscribers by phone number."""
-    url = f"{SUPABASE_URL}/rest/v1/subscribers?phone=eq.{phone}&active=eq.true&select=id,name,email,sports,color_theme,favorite_athlete,phone"
+    url = f"{SUPABASE_URL}/rest/v1/subscribers?phone=eq.{phone}&active=eq.true&select=id,name,email,sports,color_theme,html_theme,favorite_athlete,phone"
     resp = requests.get(url, headers=supabase_headers(), timeout=15)
     if resp.status_code == 200:
         return resp.json()
@@ -185,7 +186,7 @@ def lookup_by_phone(phone):
 
 def fetch_subscriber_by_id(sub_id):
     """Fetch a single subscriber's current data from Supabase."""
-    url = f"{SUPABASE_URL}/rest/v1/subscribers?id=eq.{sub_id}&select=id,name,email,sports,color_theme,favorite_athlete,phone"
+    url = f"{SUPABASE_URL}/rest/v1/subscribers?id=eq.{sub_id}&select=id,name,email,sports,color_theme,html_theme,favorite_athlete,phone"
     resp = requests.get(url, headers=supabase_headers(), timeout=15)
     if resp.status_code == 200:
         rows = resp.json()

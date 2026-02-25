@@ -150,6 +150,15 @@ NWSL_SECTION_LABELS = {
 
 COLOR_THEMES = ["blue", "green", "red", "purple", "gold", "navy"]
 
+REPORT_STYLES = ["modern", "newspaper", "vintage", "vintage_dark", "kids"]
+REPORT_STYLE_LABELS = {
+    "modern": "Modern (clean & minimal)",
+    "newspaper": "Newspaper (classic newsprint)",
+    "vintage": "Vintage (warm retro)",
+    "vintage_dark": "Vintage Dark (moody retro)",
+    "kids": "Kids (colorful & fun)",
+}
+
 DEFAULT_NBA_SECTIONS = ["scores", "top_scorers", "standings", "todays_games"]
 DEFAULT_NBA_SECTIONS_WITH_TEAM = ["scores", "team_focus", "top_scorers", "standings", "todays_games"]
 DEFAULT_SOCCER_SECTIONS = ["results", "standings"]
