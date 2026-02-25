@@ -12,11 +12,13 @@ from config import (
     SOCCER_LEAGUES, SOCCER_SECTIONS, SOCCER_SECTION_LABELS,
     MLS_TEAMS, MLS_SECTIONS, MLS_SECTION_LABELS, COLOR_THEMES,
     MLB_TEAMS, MLB_DIVISIONS, MLB_SECTIONS, MLB_SECTION_LABELS,
+    NFL_TEAMS, NFL_DIVISIONS, NFL_SECTIONS, NFL_SECTION_LABELS,
     WNBA_TEAMS, WNBA_SECTIONS, WNBA_SECTION_LABELS,
     NWSL_TEAMS, NWSL_SECTIONS, NWSL_SECTION_LABELS,
     DEFAULT_NBA_SECTIONS, DEFAULT_NBA_SECTIONS_WITH_TEAM,
     DEFAULT_SOCCER_SECTIONS, DEFAULT_MLS_SECTIONS, DEFAULT_MLS_SECTIONS_WITH_TEAM,
     DEFAULT_MLB_SECTIONS, DEFAULT_MLB_SECTIONS_WITH_TEAM,
+    DEFAULT_NFL_SECTIONS, DEFAULT_NFL_SECTIONS_WITH_TEAM,
     DEFAULT_WNBA_SECTIONS, DEFAULT_WNBA_SECTIONS_WITH_TEAM,
     DEFAULT_NWSL_SECTIONS, DEFAULT_NWSL_SECTIONS_WITH_TEAM,
 )
@@ -58,6 +60,15 @@ Sections: {json.dumps(MLB_SECTION_LABELS)}
 Default sections (no team): {json.dumps(DEFAULT_MLB_SECTIONS)}
 Default sections (with team): {json.dumps(DEFAULT_MLB_SECTIONS_WITH_TEAM)}
 When signing up for MLB, ask which division(s) they want standings for.
+
+### NFL (currently in offseason — season starts September 2026)
+Teams: {json.dumps(NFL_TEAMS)}
+Divisions (for standings): {json.dumps(NFL_DIVISIONS)}
+Sections: {json.dumps(NFL_SECTION_LABELS)}
+Default sections (offseason): {json.dumps(DEFAULT_NFL_SECTIONS)}
+Default sections (in-season, no team): ["scores", "standings", "todays_games"]
+Default sections (in-season, with team): ["scores", "standings", "todays_games", "team_focus"]
+Note: The NFL is in the offseason. Subscribers get curated news updates from ESPN. When the season starts, the system automatically expands their sections to include scores, standings, and games. When signing up, ask about favorite team and which divisions they want standings for.
 
 ### WNBA (currently in offseason — season starts May 16)
 Teams: {json.dumps(WNBA_TEAMS)}
@@ -154,7 +165,7 @@ Track what's still missing. Examples: ["favorite_team", "sections", "color_theme
 - When listing options (sections, leagues, etc.), use a clean numbered list or bullet points
 - If they say something like "my son loves the Lakers," infer NBA + Lakers as favorite team, then move on to next step
 - For team names, always use the official full name in the data (e.g., "Los Angeles Lakers" not just "Lakers")
-- If someone mentions a sport you don't support yet, let them know what's currently available (NBA, European Soccer, MLS, MLB, WNBA, NWSL)
+- If someone mentions a sport you don't support yet, let them know what's currently available (NBA, European Soccer, MLS, MLB, NFL, WNBA, NWSL)
 - For edits, be just as conversational — ask what they want to change, confirm, then update
 - favorite_athlete is optional — if they say "no" or skip it, that's fine
 - When confirming before creation, list: name, sport(s), team(s), sections, favorite athlete (if any), color theme, and email

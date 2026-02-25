@@ -87,6 +87,32 @@ MLB_SECTION_LABELS = {
     "team_focus": "Team Focus",
 }
 
+NFL_TEAMS = [
+    "Arizona Cardinals", "Atlanta Falcons", "Baltimore Ravens", "Buffalo Bills",
+    "Carolina Panthers", "Chicago Bears", "Cincinnati Bengals", "Cleveland Browns",
+    "Dallas Cowboys", "Denver Broncos", "Detroit Lions", "Green Bay Packers",
+    "Houston Texans", "Indianapolis Colts", "Jacksonville Jaguars", "Kansas City Chiefs",
+    "Las Vegas Raiders", "Los Angeles Chargers", "Los Angeles Rams", "Miami Dolphins",
+    "Minnesota Vikings", "New England Patriots", "New Orleans Saints", "New York Giants",
+    "New York Jets", "Philadelphia Eagles", "Pittsburgh Steelers", "San Francisco 49ers",
+    "Seattle Seahawks", "Tampa Bay Buccaneers", "Tennessee Titans", "Washington Commanders",
+]
+
+NFL_DIVISIONS = [
+    "AFC East", "AFC North", "AFC South", "AFC West",
+    "NFC East", "NFC North", "NFC South", "NFC West",
+]
+
+NFL_SECTIONS = ["offseason_news", "scores", "standings", "todays_games", "team_focus"]
+
+NFL_SECTION_LABELS = {
+    "offseason_news": "Offseason News",
+    "scores": "Scores",
+    "standings": "Standings",
+    "todays_games": "Upcoming Games",
+    "team_focus": "Team Focus",
+}
+
 WNBA_TEAMS = [
     "Atlanta Dream", "Chicago Sky", "Connecticut Sun", "Dallas Wings",
     "Golden State Valkyries", "Indiana Fever", "Las Vegas Aces",
@@ -131,6 +157,8 @@ DEFAULT_MLS_SECTIONS = ["results", "today_matches", "standings"]
 DEFAULT_MLS_SECTIONS_WITH_TEAM = ["results", "today_matches", "standings", "team_focus"]
 DEFAULT_MLB_SECTIONS = ["results", "todays_games", "standings"]
 DEFAULT_MLB_SECTIONS_WITH_TEAM = ["results", "todays_games", "standings", "team_focus"]
+DEFAULT_NFL_SECTIONS = ["offseason_news"]
+DEFAULT_NFL_SECTIONS_WITH_TEAM = ["offseason_news"]
 DEFAULT_WNBA_SECTIONS = ["offseason_news"]
 DEFAULT_WNBA_SECTIONS_WITH_TEAM = ["offseason_news", "team_focus"]
 DEFAULT_NWSL_SECTIONS = ["offseason_news"]
