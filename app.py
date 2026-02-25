@@ -318,11 +318,17 @@ def handle_message(phone, text):
             f"Current configurations:\n{kids_block}]"
         )
 
+    # Store raw text in history (without system context) to keep history clean
+    add_to_history(conv, "user", text)
+
+    # Append system context only to the current message so Claude sees it once
     msg_for_claude = text + known_kids_context
-    add_to_history(conv, "user", msg_for_claude)
+
+    # Build history for Claude: all prior messages, but without system context noise
+    prior_history = conv["history"][:-1]
 
     # Parse with Claude (full conversation history gives it context for multi-step flow)
-    result = parse_message(msg_for_claude, conv["history"][:-1])
+    result = parse_message(msg_for_claude, prior_history)
     reply = result["reply"]
     action = result.get("action")
     data = result.get("data")
