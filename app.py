@@ -151,6 +151,7 @@ def create_subscriber(data, phone=""):
         "parent_email": data["email"],
         "color_theme": data.get("color_theme", "blue"),
         "html_theme": data.get("html_theme", "modern"),
+        "use_html_engine": True,
         "favorite_athlete": data.get("favorite_athlete", ""),
         "sports": data.get("sports", []),
         "phone": phone,
