@@ -284,12 +284,11 @@ def handle_message(phone, text):
     """Process an incoming WhatsApp message and return a reply."""
     conv = get_conversation(phone)
 
-    # Look up existing kids linked to this phone number
-    if "known_kids" not in conv:
-        kids = lookup_by_phone(phone)
-        conv["known_kids"] = kids
-        if kids:
-            conv["pending_data"]["email"] = kids[0]["email"]
+    # Always refresh subscriber data from Supabase so website edits are reflected
+    kids = lookup_by_phone(phone)
+    conv["known_kids"] = kids
+    if kids:
+        conv["pending_data"]["email"] = kids[0]["email"]
 
     # Build context about known kids for Claude (inject on every message)
     known_kids_context = ""
