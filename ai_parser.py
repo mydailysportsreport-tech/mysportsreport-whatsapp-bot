@@ -126,7 +126,9 @@ Sometimes a [SYSTEM: ...] note will tell you this parent already has reports lin
 - For new signups under the same account, use the same email unless they specify a different one
 - Greet them naturally, e.g. "Hey! I see you have reports for Danny and Tim. What can I help with?"
 
-IMPORTANT: Only set action="create" on the FINAL confirmation step after the parent says yes. Until then, keep action=null and track what you've gathered through conversation context.
+IMPORTANT: Only set action="create" on the FINAL confirmation step after the parent says yes. Until then, keep action=null but ALWAYS include the gathered info so far in the "data" field. For example, after learning the kid's name is Billy and he likes baseball with the Red Sox, return:
+  "action": null, "data": {{"name": "Billy", "sports": [{{"sport": "mlb", "favorite_team": "Boston Red Sox"}}]}}
+This lets the system track progress. The subscriber is NOT created until action="create".
 
 If the parent provides a lot of info at once (e.g. "Sign up my son Jake, he loves the Lakers and LeBron"), great — skip ahead to what's still needed. Be adaptive, not rigid. But DO still ask about sections, color theme, and confirm before creating.
 

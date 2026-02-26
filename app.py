@@ -250,6 +250,36 @@ def trigger_report_for_subscriber(subscriber_id):
 
 # ── Conversation management ──
 
+def load_recent_chat_history(phone):
+    """Load recent chat messages from Supabase to rebuild conversation after server restart."""
+    if not SUPABASE_SERVICE_KEY:
+        return []
+    try:
+        from datetime import datetime, timedelta, timezone
+        cutoff = (datetime.now(timezone.utc) - timedelta(seconds=CONVERSATION_TTL)).isoformat()
+        url = (
+            f"{SUPABASE_URL}/rest/v1/chat_log"
+            f"?phone=eq.{phone}"
+            f"&created_at=gte.{cutoff}"
+            f"&order=created_at.asc"
+            f"&limit=20"
+            f"&select=direction,body"
+        )
+        resp = requests.get(url, headers=supabase_headers(), timeout=10)
+        if resp.status_code == 200:
+            rows = resp.json()
+            history = []
+            for row in rows:
+                role = "user" if row["direction"] == "inbound" else "assistant"
+                history.append({"role": role, "content": row["body"]})
+            if history:
+                print(f"[history] Recovered {len(history)} messages from chat_log for {phone}")
+            return history
+    except Exception as e:
+        print(f"Chat history load error: {e}")
+    return []
+
+
 def get_conversation(phone):
     """Get or create a conversation for a phone number."""
     now = time.time()
@@ -262,8 +292,11 @@ def get_conversation(phone):
         else:
             del conversations[phone]
 
+    # Try to recover recent history from chat_log (survives server restarts)
+    history = load_recent_chat_history(phone)
+
     conv = {
-        "history": [],
+        "history": history,
         "last_active": now,
         "pending_data": {},
     }
@@ -333,8 +366,34 @@ def handle_message(phone, text):
     # Store raw text in history (without system context) to keep history clean
     add_to_history(conv, "user", text)
 
+    # Build progress context from accumulated pending data (helps Claude track state)
+    progress_context = ""
+    pending = conv.get("pending_data", {})
+    if pending and not conv.get("known_kids"):
+        progress_parts = []
+        if pending.get("name"):
+            progress_parts.append(f"name={pending['name']}")
+        if pending.get("sports"):
+            sport_strs = []
+            for s in pending["sports"]:
+                desc = s.get("sport", "?")
+                if s.get("favorite_team"):
+                    desc += f" (team: {s['favorite_team']})"
+                if s.get("sections"):
+                    desc += f" (sections: {', '.join(s['sections'])})"
+                sport_strs.append(desc)
+            progress_parts.append(f"sports=[{', '.join(sport_strs)}]")
+        if pending.get("color_theme"):
+            progress_parts.append(f"color_theme={pending['color_theme']}")
+        if pending.get("html_theme"):
+            progress_parts.append(f"report_style={pending['html_theme']}")
+        if pending.get("email"):
+            progress_parts.append(f"email={pending['email']}")
+        if progress_parts:
+            progress_context = f"\n[SIGNUP PROGRESS so far: {', '.join(progress_parts)}. Do NOT re-ask for any of this — continue to the next missing item.]"
+
     # Append system context only to the current message so Claude sees it once
-    msg_for_claude = text + known_kids_context
+    msg_for_claude = text + known_kids_context + progress_context
 
     # Build history for Claude: all prior messages, but without system context noise
     prior_history = conv["history"][:-1]
