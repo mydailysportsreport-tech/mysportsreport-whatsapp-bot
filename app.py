@@ -250,43 +250,94 @@ def trigger_report_for_subscriber(subscriber_id):
 
 # ── Conversation management ──
 
-def load_recent_chat_history(phone):
-    """Load recent chat messages from Supabase to rebuild conversation after server restart."""
-    if not SUPABASE_SERVICE_KEY:
-        return []
+def save_conversation_state(phone, pending_data):
+    """Persist accumulated signup state to chat_log for recovery after server restart."""
+    if not SUPABASE_SERVICE_KEY or not pending_data:
+        return
     try:
-        from datetime import datetime, timedelta, timezone
-        cutoff = (datetime.now(timezone.utc) - timedelta(seconds=CONVERSATION_TTL)).isoformat()
+        state_json = json.dumps(pending_data, default=str)
+        url = f"{SUPABASE_URL}/rest/v1/chat_log"
+        payload = {
+            "phone": phone,
+            "direction": "outbound",
+            "body": f"__STATE__{state_json}",
+        }
+        requests.post(url, headers=supabase_headers(), json=payload, timeout=5)
+    except Exception as e:
+        print(f"State save error: {e}")
+
+
+def load_recent_chat_history(phone):
+    """Load recent chat messages AND pending state from Supabase.
+
+    Returns (history, recovered_pending_data).
+    Handles: server restarts, reset commands, state recovery.
+    """
+    if not SUPABASE_SERVICE_KEY:
+        return [], {}
+    try:
+        # Fetch last 30 messages ordered by most recent first.
+        # Avoid date filtering in the URL to prevent encoding issues with +00:00.
         url = (
             f"{SUPABASE_URL}/rest/v1/chat_log"
             f"?phone=eq.{phone}"
-            f"&created_at=gte.{cutoff}"
-            f"&order=created_at.asc"
-            f"&limit=20"
-            f"&select=direction,body"
+            f"&order=created_at.desc"
+            f"&limit=30"
+            f"&select=direction,body,created_at"
         )
         resp = requests.get(url, headers=supabase_headers(), timeout=10)
-        if resp.status_code == 200:
-            rows = resp.json()
-            history = []
-            for row in rows:
+        if resp.status_code != 200:
+            print(f"Chat history load HTTP {resp.status_code}")
+            return [], {}
+
+        rows = resp.json()
+        rows.reverse()  # chronological order
+
+        # Filter by time in Python (avoids URL date encoding issues)
+        from datetime import datetime, timedelta, timezone
+        cutoff = datetime.now(timezone.utc) - timedelta(seconds=CONVERSATION_TTL)
+        recent_rows = []
+        for row in rows:
+            try:
+                ts_str = row.get("created_at", "")
+                ts = datetime.fromisoformat(ts_str.replace("Z", "+00:00"))
+                if ts >= cutoff:
+                    recent_rows.append(row)
+            except Exception:
+                recent_rows.append(row)  # include if can't parse
+
+        # Find last reset and truncate
+        reset_keywords = {"reset", "start over", "new conversation"}
+        last_reset_idx = -1
+        for i, row in enumerate(recent_rows):
+            if row["direction"] == "inbound" and row["body"].strip().lower() in reset_keywords:
+                last_reset_idx = i
+
+        start_idx = last_reset_idx + 2 if last_reset_idx >= 0 else 0
+
+        # Build history and recover state
+        history = []
+        recovered_state = {}
+        for row in recent_rows[start_idx:]:
+            body = row["body"]
+            if body.startswith("__STATE__"):
+                try:
+                    recovered_state = json.loads(body[len("__STATE__"):])
+                except Exception:
+                    pass
+            else:
                 role = "user" if row["direction"] == "inbound" else "assistant"
-                history.append({"role": role, "content": row["body"]})
-            # Truncate at the last reset — only keep messages after it
-            reset_keywords = {"reset", "start over", "new conversation"}
-            last_reset = -1
-            for i, msg in enumerate(history):
-                if msg["role"] == "user" and msg["content"].strip().lower() in reset_keywords:
-                    last_reset = i
-            if last_reset >= 0:
-                # Skip the reset message and the bot's "Conversation reset!" reply
-                history = history[last_reset + 2:]
-            if history:
-                print(f"[history] Recovered {len(history)} messages from chat_log for {phone}")
-            return history
+                history.append({"role": role, "content": body})
+
+        if history:
+            print(f"[history] Recovered {len(history)} messages for {phone}")
+        if recovered_state:
+            print(f"[state] Recovered pending_data: {json.dumps(recovered_state, default=str)[:200]}")
+
+        return history, recovered_state
     except Exception as e:
         print(f"Chat history load error: {e}")
-    return []
+    return [], {}
 
 
 def get_conversation(phone):
@@ -301,13 +352,13 @@ def get_conversation(phone):
         else:
             del conversations[phone]
 
-    # Try to recover recent history from chat_log (survives server restarts)
-    history = load_recent_chat_history(phone)
+    # Try to recover recent history + state from chat_log (survives server restarts)
+    history, recovered_state = load_recent_chat_history(phone)
 
     conv = {
         "history": history,
         "last_active": now,
-        "pending_data": {},
+        "pending_data": recovered_state,
     }
     conversations[phone] = conv
     return conv
@@ -382,32 +433,36 @@ def handle_message(phone, text):
     # Store raw text in history (without system context) to keep history clean
     add_to_history(conv, "user", text)
 
-    # Build progress context from accumulated pending data (helps Claude track state)
-    # Works for both new users AND returning users signing up an additional kid
+    # Build progress context from accumulated pending data (helps Claude track state).
+    # Works for both new users AND returning users signing up an additional kid.
+    # This is CRITICAL for surviving server restarts — pending_data is recovered from
+    # chat_log state entries, so this note re-grounds Claude on what's been gathered.
     progress_context = ""
     pending = conv.get("pending_data", {})
     if pending.get("name") or pending.get("sports"):
         progress_parts = []
         if pending.get("name"):
-            progress_parts.append(f"name={pending['name']}")
+            progress_parts.append(f"Kid's name: {pending['name']}")
         if pending.get("sports"):
-            sport_strs = []
             for s in pending["sports"]:
-                desc = s.get("sport", "?")
+                desc = s.get("sport", "?").upper()
                 if s.get("favorite_team"):
                     desc += f" (team: {s['favorite_team']})"
                 if s.get("sections"):
-                    desc += f" (sections: {', '.join(s['sections'])})"
-                sport_strs.append(desc)
-            progress_parts.append(f"sports=[{', '.join(sport_strs)}]")
+                    desc += f" — sections: {', '.join(s['sections'])}"
+                progress_parts.append(desc)
         if pending.get("color_theme"):
-            progress_parts.append(f"color_theme={pending['color_theme']}")
+            progress_parts.append(f"color theme: {pending['color_theme']}")
         if pending.get("html_theme"):
-            progress_parts.append(f"report_style={pending['html_theme']}")
+            progress_parts.append(f"report style: {pending['html_theme']}")
         if pending.get("email"):
-            progress_parts.append(f"email={pending['email']}")
+            progress_parts.append(f"email: {pending['email']}")
         if progress_parts:
-            progress_context = f"\n[SIGNUP PROGRESS so far: {', '.join(progress_parts)}. Do NOT re-ask for any of this — continue to the next missing item.]"
+            progress_context = (
+                f"\n[SIGNUP IN PROGRESS — you are helping sign up a new kid. "
+                f"Already gathered: {'; '.join(progress_parts)}. "
+                f"Do NOT re-ask for ANY of this. Continue to the next missing item.]"
+            )
 
     # Append system context only to the current message so Claude sees it once
     msg_for_claude = text + known_kids_context + progress_context
@@ -612,6 +667,11 @@ def handle_message(phone, text):
                 who = f"phone {phone}"
             notify = f"💡 Feature request from {who}:\n\"{feature}\""
             send_whatsapp_message(ADMIN_PHONE, notify)
+
+    # Persist signup state so it survives server restarts
+    pd = conv.get("pending_data", {})
+    if pd.get("name") or pd.get("sports"):
+        save_conversation_state(phone, pd)
 
     return reply
 
