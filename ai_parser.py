@@ -211,7 +211,7 @@ Note: "overflow_pref" defaults to "fit" — only include it if the user explicit
 """
 
 
-def parse_message(user_message, conversation_history=None):
+def parse_message(user_message, conversation_history=None, session_context=""):
     """
     Parse a WhatsApp message using Claude.
 
@@ -219,10 +219,12 @@ def parse_message(user_message, conversation_history=None):
         user_message: The text the user sent
         conversation_history: List of prior messages in the conversation
             [{"role": "user", "content": "..."}, {"role": "assistant", "content": "..."}]
+        session_context: Dynamic context appended to system prompt (e.g. signup state)
 
     Returns:
         dict with keys: reply, action, data, needs
     """
+    system = SYSTEM_PROMPT + session_context if session_context else SYSTEM_PROMPT
     messages = []
 
     if conversation_history:
@@ -235,7 +237,7 @@ def parse_message(user_message, conversation_history=None):
         response = client.messages.create(
             model="claude-sonnet-4-20250514",
             max_tokens=1024,
-            system=SYSTEM_PROMPT,
+            system=system,
             messages=messages,
         )
 

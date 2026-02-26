@@ -433,45 +433,59 @@ def handle_message(phone, text):
     # Store raw text in history (without system context) to keep history clean
     add_to_history(conv, "user", text)
 
-    # Build progress context from accumulated pending data (helps Claude track state).
-    # Works for both new users AND returning users signing up an additional kid.
-    # This is CRITICAL for surviving server restarts — pending_data is recovered from
-    # chat_log state entries, so this note re-grounds Claude on what's been gathered.
-    progress_context = ""
+    # Build session context for the system prompt.
+    # This is injected at the END of the system prompt (highest-priority position)
+    # so Claude can't miss it. We build it from pending_data first, then fall back
+    # to scanning conversation history for the kid's name.
+    session_context = ""
     pending = conv.get("pending_data", {})
-    if pending.get("name") or pending.get("sports"):
-        progress_parts = []
-        if pending.get("name"):
-            progress_parts.append(f"Kid's name: {pending['name']}")
-        if pending.get("sports"):
-            for s in pending["sports"]:
-                desc = s.get("sport", "?").upper()
-                if s.get("favorite_team"):
-                    desc += f" (team: {s['favorite_team']})"
-                if s.get("sections"):
-                    desc += f" — sections: {', '.join(s['sections'])}"
-                progress_parts.append(desc)
+    name = pending.get("name")
+    sports_info = []
+
+    if pending.get("sports"):
+        for s in pending["sports"]:
+            desc = s.get("sport", "?").upper()
+            if s.get("favorite_team"):
+                desc += f" (team: {s['favorite_team']})"
+            if s.get("sections"):
+                desc += f" — sections: {', '.join(s['sections'])}"
+            sports_info.append(desc)
+
+    # Fallback: extract name from conversation history if pending_data doesn't have it
+    if not name and conv.get("history"):
+        import re
+        for msg in conv["history"]:
+            if msg["role"] == "assistant":
+                content = msg.get("content", "")
+                m = re.search(r'(?:what sports is|does) (\w+) (?:into|have a favorite)', content, re.IGNORECASE)
+                if m:
+                    name = m.group(1)
+                    break
+
+    if name:
+        parts = [f"Kid's name: {name}"]
+        parts.extend(sports_info)
         if pending.get("color_theme"):
-            progress_parts.append(f"color theme: {pending['color_theme']}")
+            parts.append(f"color theme: {pending['color_theme']}")
         if pending.get("html_theme"):
-            progress_parts.append(f"report style: {pending['html_theme']}")
-        if pending.get("email"):
-            progress_parts.append(f"email: {pending['email']}")
-        if progress_parts:
-            progress_context = (
-                f"\n[SIGNUP IN PROGRESS — you are helping sign up a new kid. "
-                f"Already gathered: {'; '.join(progress_parts)}. "
-                f"Do NOT re-ask for ANY of this. Continue to the next missing item.]"
-            )
+            parts.append(f"report style: {pending['html_theme']}")
+        session_context = (
+            f"\n\n## CURRENT SESSION STATE\n"
+            f"You are CURRENTLY in the middle of signing up a new kid.\n"
+            f"Already gathered: {'; '.join(parts)}.\n"
+            f"CONTINUE this signup from where you left off. "
+            f"Do NOT restart, re-introduce yourself, or re-ask for any info listed above."
+        )
 
     # Append system context only to the current message so Claude sees it once
-    msg_for_claude = text + known_kids_context + progress_context
+    msg_for_claude = text + known_kids_context
 
     # Build history for Claude: all prior messages, but without system context noise
     prior_history = conv["history"][:-1]
 
     # Parse with Claude (full conversation history gives it context for multi-step flow)
-    result = parse_message(msg_for_claude, prior_history)
+    # session_context is appended to the system prompt for maximum priority
+    result = parse_message(msg_for_claude, prior_history, session_context=session_context)
     reply = result["reply"]
     action = result.get("action")
     data = result.get("data")
