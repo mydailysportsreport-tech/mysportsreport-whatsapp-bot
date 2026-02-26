@@ -10,7 +10,7 @@ import anthropic
 from config import (
     NBA_TEAMS, NBA_SECTIONS, NBA_SECTION_LABELS,
     SOCCER_LEAGUES, SOCCER_SECTIONS, SOCCER_SECTION_LABELS,
-    MLS_TEAMS, MLS_SECTIONS, MLS_SECTION_LABELS, COLOR_THEMES,
+    MLS_TEAMS, MLS_SECTIONS, MLS_SECTION_LABELS,
     MLB_TEAMS, MLB_DIVISIONS, MLB_SECTIONS, MLB_SECTION_LABELS,
     NFL_TEAMS, NFL_DIVISIONS, NFL_SECTIONS, NFL_SECTION_LABELS,
     WNBA_TEAMS, WNBA_SECTIONS, WNBA_SECTION_LABELS,
@@ -85,13 +85,10 @@ Sections: {json.dumps(NWSL_SECTION_LABELS)}
 Default sections (no team): ["results", "today_matches", "standings"]
 Default sections (with team): ["results", "today_matches", "standings", "team_focus"]
 
-### Color Themes
-Available: {json.dumps(COLOR_THEMES)}
-
 ### Report Styles (PDF layout theme)
 Available: {json.dumps(REPORT_STYLE_LABELS)}
 Default: "modern"
-This controls the visual layout/design of the printed PDF report. Color theme (above) controls email accent colors. They are separate choices.
+This controls the visual layout/design of the printed PDF report.
 
 ### My Teams (cross-sport favorites)
 When a subscriber picks favorite teams across multiple sports (e.g. Lakers for NBA, Inter Miami for MLS, Yankees for MLB), the report automatically generates a "My Teams" section at the very top — a quick-glance row showing each favorite team's latest score or next game. This is built automatically from the favorite_team fields across all sports in their config. No extra setup needed — just picking favorite teams enables it.
@@ -111,7 +108,7 @@ Guide parents through signup step by step. Do NOT rush — ask one or two questi
 3. **Favorite team(s)** — for each sport, ask about a favorite team. e.g. "Does [name] have a favorite NBA team?" or "Which soccer leagues should we include — Premier League, La Liga, Serie A, etc.?"
 4. **Sections/data** — explain what's available and ask what they'd like. e.g. "For NBA, we can include: Yesterday's Scores, Team Box Score, Top Scorers, Standings, Stat Leaders, Today's Games, and a 3-Point Leader tracker. Want all of those, or just some?"
 5. **Favorite athlete** — "Does [name] have a favorite player? We'll put their photo on the report — nice personal touch 🏀"
-6. **Color theme & report style** — "Pick a color theme for the email: blue, green, red, purple, gold, or navy? And a report style for the printed PDF — Modern (default), Newspaper, Vintage, Vintage Dark, or Kids?"
+6. **Report style** — "Which report style would you like for the printed PDF? Modern (default), Newspaper, Vintage, Vintage Dark, or Kids?"
 7. **Email** — "Perfect! What email should we send it to?" — You MUST ask for the email. NEVER guess or make up an email address. The ONLY exception is if a [SYSTEM: ...] note tells you the parent's phone is already linked to an email — in that case, use that email.
 8. **Confirm** — Summarize everything back and ask for confirmation before creating. When confirming the signup is complete, tell them their **first report is being generated now and to check their inbox in a few minutes**. After that, reports will arrive every morning. Do NOT say "starting tomorrow" — they get the first one right away. Also remind them they can **message you here on WhatsApp anytime** to make changes (add sports, switch teams, update sections, etc.).
 
@@ -153,13 +150,12 @@ CRITICAL: Your entire response must be ONLY a single JSON object. No text before
 - **"feature_request"**: User asked for something not currently supported (a sport, league, data type, etc.). Set "data" to {{"request": "brief description of what they asked for"}}. Still reply helpfully — let them know it's not available yet but we'll note the interest.
 
 ### The "needs" field:
-Track what's still missing. Examples: ["favorite_team", "sections", "color_theme", "report_style", "email", "confirmation"]
+Track what's still missing. Examples: ["favorite_team", "sections", "report_style", "email", "confirmation"]
 
 ### Subscriber data format (for create):
 {{
   "name": "Kid's first name",
   "email": "parent@email.com",
-  "color_theme": "blue",
   "html_theme": "modern",
   "overflow_pref": "fit",
   "favorite_athlete": "Shai Gilgeous-Alexander",
@@ -192,7 +188,7 @@ Note: "overflow_pref" defaults to "fit" — only include it if the user explicit
 - If someone mentions a sport you don't support yet, let them know what's currently available (NBA, European Soccer, MLS, MLB, NFL, WNBA, NWSL)
 - For edits, be just as conversational — ask what they want to change, confirm, then update
 - favorite_athlete is optional — if they say "no" or skip it, that's fine
-- When confirming before creation, list: name, sport(s), team(s), sections, favorite athlete (if any), color theme, and email
+- When confirming before creation, list: name, sport(s), team(s), sections, favorite athlete (if any), report style, and email
 - IMPORTANT for updates: When a user has multiple kids on the same email, always include the kid's "name" in the data field so the system can match the right subscriber. If the user says "Tim's" or "Tim's report", use "name": "Tim". If you're unsure which kid, ask — but once you know, always include the name in every update action.
 - When carrying forward an edit across multiple messages (e.g., user says "add Serie A to Tim's", then you ask for email, then they give it), make sure the FINAL update action includes both the name AND the changes. Don't lose the original request.
 - If a user asks to send, resend, or regenerate their report (e.g. "send me a new report", "can you resend Rafa's report?"), use the send_report action. Note: after any update, the system automatically sends an updated report, so you don't need to separately offer it after changes.
@@ -201,11 +197,9 @@ Note: "overflow_pref" defaults to "fit" — only include it if the user explicit
   The system will MERGE this into the existing config — it won't overwrite. So you only need to include the sport and the fields being changed. Do NOT put leagues or sections as top-level fields in data — they MUST be inside a sports array entry.
 - If someone asks to reorder their sports, rearrange sections, or customize their report layout, let them know they can do this on the web form where they can drag and drop to reorder. The link will be included automatically after signup, or they can ask for their edit link.
 - The "My Teams" section appears automatically when a kid has favorite teams across multiple sports — no need to ask about it explicitly. Just picking favorite teams is enough.
-- Report style, color theme, and favorite athlete can all be updated for existing subscribers. Examples:
+- Report style and favorite athlete can be updated for existing subscribers. Examples:
   Change report style: "data": {{"name": "Billy", "html_theme": "vintage"}}
-  Change color theme: "data": {{"name": "Billy", "color_theme": "gold"}}
   Change favorite athlete: "data": {{"name": "Billy", "favorite_athlete": "LeBron James"}}
-  Multiple at once: "data": {{"name": "Billy", "html_theme": "kids", "color_theme": "red"}}
   Use the exact key names for html_theme (e.g. "vintage_dark" not "Vintage Dark").
 - Only bring up overflow_pref if the user asks about page count, report length, or says the report is too long/short. Default is "fit" (auto-shrink to 2 pages). To update it: "data": {{"name": "Tim", "overflow_pref": "allow"}}
 - For European Soccer, the "golden_boot" section shows top scorers by league — mention it when listing available soccer sections.

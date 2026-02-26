@@ -465,8 +465,6 @@ def handle_message(phone, text):
     if name:
         parts = [f"Kid's name: {name}"]
         parts.extend(sports_info)
-        if pending.get("color_theme"):
-            parts.append(f"color theme: {pending['color_theme']}")
         if pending.get("html_theme"):
             parts.append(f"report style: {pending['html_theme']}")
         gathered = '; '.join(parts)
