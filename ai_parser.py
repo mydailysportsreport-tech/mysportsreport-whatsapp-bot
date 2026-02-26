@@ -79,7 +79,7 @@ Default sections (in-season, no team): ["scores", "standings", "todays_games"]
 Default sections (in-season, with team): ["scores", "standings", "todays_games", "team_focus"]
 Note: During the offseason, subscribers get curated news updates from ESPN. When the season starts, the system automatically expands their sections to include live scores, standings, and games.
 
-### NWSL (currently in-season — started March 14)
+### NWSL (season starts March 14)
 Teams: {json.dumps(NWSL_TEAMS)}
 Sections: {json.dumps(NWSL_SECTION_LABELS)}
 Default sections (no team): ["results", "today_matches", "standings"]
@@ -92,6 +92,15 @@ Available: {json.dumps(COLOR_THEMES)}
 Available: {json.dumps(REPORT_STYLE_LABELS)}
 Default: "modern"
 This controls the visual layout/design of the printed PDF report. Color theme (above) controls email accent colors. They are separate choices.
+
+### My Teams (cross-sport favorites)
+When a subscriber picks favorite teams across multiple sports (e.g. Lakers for NBA, Inter Miami for MLS, Yankees for MLB), the report automatically generates a "My Teams" section at the very top — a quick-glance row showing each favorite team's latest score or next game. This is built automatically from the favorite_team fields across all sports in their config. No extra setup needed — just picking favorite teams enables it.
+
+### Page Overflow Preference
+Reports target ~2 printed pages. If a subscriber adds lots of sports/sections and content exceeds 2 pages, there are two options:
+- **"fit"** (default): Auto-shrink everything to fit on 2 pages. Sections get compressed but nothing is cut.
+- **"allow"**: Allow the report to spill onto 3+ pages. Full-size sections, but uses more paper.
+This is set via "overflow_pref" in the subscriber data. Most parents prefer "fit" — only mention it if the user asks about page length, report size, or fitting content.
 
 ## Conversation Flow for New Signups
 
@@ -147,6 +156,7 @@ Track what's still missing. Examples: ["favorite_team", "sections", "color_theme
   "email": "parent@email.com",
   "color_theme": "blue",
   "html_theme": "modern",
+  "overflow_pref": "fit",
   "favorite_athlete": "Shai Gilgeous-Alexander",
   "sports": [
     {{
@@ -159,11 +169,12 @@ Track what's still missing. Examples: ["favorite_team", "sections", "color_theme
       "sport": "soccer",
       "order": 2,
       "leagues": ["Premier League", "La Liga"],
-      "sections": ["results", "standings"],
+      "sections": ["results", "standings", "golden_boot"],
       "options": {{"show_scorers": true}}
     }}
   ]
 }}
+Note: "overflow_pref" defaults to "fit" — only include it if the user explicitly asks to change it.
 
 ## Guidelines
 - Be friendly, concise, and use casual language appropriate for WhatsApp
@@ -183,6 +194,9 @@ Track what's still missing. Examples: ["favorite_team", "sections", "color_theme
   "data": {{"name": "Teddy", "sports": [{{"sport": "soccer", "leagues": ["Bundesliga"]}}]}}
   The system will MERGE this into the existing config — it won't overwrite. So you only need to include the sport and the fields being changed. Do NOT put leagues or sections as top-level fields in data — they MUST be inside a sports array entry.
 - If someone asks to reorder their sports, rearrange sections, or customize their report layout, let them know they can do this on the web form where they can drag and drop to reorder. The link will be included automatically after signup, or they can ask for their edit link.
+- The "My Teams" section appears automatically when a kid has favorite teams across multiple sports — no need to ask about it explicitly. Just picking favorite teams is enough.
+- Only bring up overflow_pref if the user asks about page count, report length, or says the report is too long/short. Default is "fit" (auto-shrink to 2 pages). To update it: "data": {{"name": "Tim", "overflow_pref": "allow"}}
+- For European Soccer, the "golden_boot" section shows top scorers by league — mention it when listing available soccer sections.
 """
 
 

@@ -34,12 +34,13 @@ SOCCER_LEAGUES = [
     "Champions League",
 ]
 
-SOCCER_SECTIONS = ["results", "today_matches", "standings"]
+SOCCER_SECTIONS = ["results", "today_matches", "standings", "golden_boot"]
 
 SOCCER_SECTION_LABELS = {
     "results": "Yesterday's Results",
     "today_matches": "Today's Matches",
     "standings": "Standings",
+    "golden_boot": "Golden Boot Leaders (top scorers by league)",
 }
 
 MLS_TEAMS = [
@@ -170,7 +171,7 @@ DEFAULT_NFL_SECTIONS = ["offseason_news"]
 DEFAULT_NFL_SECTIONS_WITH_TEAM = ["offseason_news"]
 DEFAULT_WNBA_SECTIONS = ["offseason_news"]
 DEFAULT_WNBA_SECTIONS_WITH_TEAM = ["offseason_news", "team_focus"]
-DEFAULT_NWSL_SECTIONS = ["offseason_news"]
-DEFAULT_NWSL_SECTIONS_WITH_TEAM = ["offseason_news", "team_focus"]
+DEFAULT_NWSL_SECTIONS = ["results", "today_matches", "standings"]
+DEFAULT_NWSL_SECTIONS_WITH_TEAM = ["results", "today_matches", "standings", "team_focus"]
 
-SETTINGS_URL = "https://mydailysportsreport.com/signup.html"
+SETTINGS_URL = "https://mydailysportsreport.com/signup"

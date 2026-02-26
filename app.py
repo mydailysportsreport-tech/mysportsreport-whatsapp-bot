@@ -169,7 +169,7 @@ def create_subscriber(data, phone=""):
 
 def lookup_subscribers(email):
     """Look up active subscribers by email."""
-    url = f"{SUPABASE_URL}/rest/v1/subscribers?email=eq.{email}&active=eq.true&select=id,name,email,sports,color_theme,html_theme,favorite_athlete,phone"
+    url = f"{SUPABASE_URL}/rest/v1/subscribers?email=eq.{email}&active=eq.true&select=id,name,email,sports,color_theme,html_theme,favorite_athlete,phone,overflow_pref,favorite_teams"
     resp = requests.get(url, headers=supabase_headers(), timeout=15)
     if resp.status_code == 200:
         return resp.json()
@@ -178,7 +178,7 @@ def lookup_subscribers(email):
 
 def lookup_by_phone(phone):
     """Look up active subscribers by phone number."""
-    url = f"{SUPABASE_URL}/rest/v1/subscribers?phone=eq.{phone}&active=eq.true&select=id,name,email,sports,color_theme,html_theme,favorite_athlete,phone"
+    url = f"{SUPABASE_URL}/rest/v1/subscribers?phone=eq.{phone}&active=eq.true&select=id,name,email,sports,color_theme,html_theme,favorite_athlete,phone,overflow_pref,favorite_teams"
     resp = requests.get(url, headers=supabase_headers(), timeout=15)
     if resp.status_code == 200:
         return resp.json()
@@ -187,7 +187,7 @@ def lookup_by_phone(phone):
 
 def fetch_subscriber_by_id(sub_id):
     """Fetch a single subscriber's current data from Supabase."""
-    url = f"{SUPABASE_URL}/rest/v1/subscribers?id=eq.{sub_id}&select=id,name,email,sports,color_theme,html_theme,favorite_athlete,phone"
+    url = f"{SUPABASE_URL}/rest/v1/subscribers?id=eq.{sub_id}&select=id,name,email,sports,color_theme,html_theme,favorite_athlete,phone,overflow_pref,favorite_teams"
     resp = requests.get(url, headers=supabase_headers(), timeout=15)
     if resp.status_code == 200:
         rows = resp.json()
@@ -311,7 +311,17 @@ def handle_message(phone, text):
                     parts.append(f"sections: {', '.join(s['sections'])}")
                 sports_desc.append(" | ".join(parts))
             sports_str = "; ".join(sports_desc) if sports_desc else "no sports configured"
-            kids_detail.append(f"  - {k['name']}: {sports_str}")
+            extras = []
+            if k.get("html_theme"):
+                extras.append(f"report style: {k['html_theme']}")
+            if k.get("color_theme"):
+                extras.append(f"color theme: {k['color_theme']}")
+            if k.get("favorite_teams"):
+                extras.append(f"My Teams section: {', '.join(k['favorite_teams'])}")
+            if k.get("overflow_pref"):
+                extras.append(f"overflow: {k['overflow_pref']}")
+            extras_str = f" [{', '.join(extras)}]" if extras else ""
+            kids_detail.append(f"  - {k['name']}: {sports_str}{extras_str}")
         kids_block = "\n".join(kids_detail)
         known_kids_context = (
             f"\n[SYSTEM: This parent's phone is linked to these existing reports: "
