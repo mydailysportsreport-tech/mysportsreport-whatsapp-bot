@@ -317,6 +317,13 @@ def add_to_history(conv, role, content):
 
 def handle_message(phone, text):
     """Process an incoming WhatsApp message and return a reply."""
+
+    # Allow user to reset conversation with a keyword
+    if text.strip().lower() in ("reset", "start over", "new conversation"):
+        if phone in conversations:
+            del conversations[phone]
+        return "🔄 Conversation reset! Let's start fresh. How can I help you today?"
+
     conv = get_conversation(phone)
 
     # Always refresh subscriber data from Supabase so website edits are reflected
