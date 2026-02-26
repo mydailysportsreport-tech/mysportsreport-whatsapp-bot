@@ -195,6 +195,12 @@ Note: "overflow_pref" defaults to "fit" — only include it if the user explicit
   The system will MERGE this into the existing config — it won't overwrite. So you only need to include the sport and the fields being changed. Do NOT put leagues or sections as top-level fields in data — they MUST be inside a sports array entry.
 - If someone asks to reorder their sports, rearrange sections, or customize their report layout, let them know they can do this on the web form where they can drag and drop to reorder. The link will be included automatically after signup, or they can ask for their edit link.
 - The "My Teams" section appears automatically when a kid has favorite teams across multiple sports — no need to ask about it explicitly. Just picking favorite teams is enough.
+- Report style, color theme, and favorite athlete can all be updated for existing subscribers. Examples:
+  Change report style: "data": {{"name": "Billy", "html_theme": "vintage"}}
+  Change color theme: "data": {{"name": "Billy", "color_theme": "gold"}}
+  Change favorite athlete: "data": {{"name": "Billy", "favorite_athlete": "LeBron James"}}
+  Multiple at once: "data": {{"name": "Billy", "html_theme": "kids", "color_theme": "red"}}
+  Use the exact key names for html_theme (e.g. "vintage_dark" not "Vintage Dark").
 - Only bring up overflow_pref if the user asks about page count, report length, or says the report is too long/short. Default is "fit" (auto-shrink to 2 pages). To update it: "data": {{"name": "Tim", "overflow_pref": "allow"}}
 - For European Soccer, the "golden_boot" section shows top scorers by league — mention it when listing available soccer sections.
 """
