@@ -457,7 +457,7 @@ def handle_message(phone, text):
         for msg in conv["history"]:
             if msg["role"] == "assistant":
                 content = msg.get("content", "")
-                m = re.search(r'(?:what sports is|does) (\w+) (?:into|have a favorite)', content, re.IGNORECASE)
+                m = re.search(r'(?:what sports? is|does) (\w+) (?:into|have)', content, re.IGNORECASE)
                 if m:
                     name = m.group(1)
                     break
