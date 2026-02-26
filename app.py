@@ -272,6 +272,15 @@ def load_recent_chat_history(phone):
             for row in rows:
                 role = "user" if row["direction"] == "inbound" else "assistant"
                 history.append({"role": role, "content": row["body"]})
+            # Truncate at the last reset — only keep messages after it
+            reset_keywords = {"reset", "start over", "new conversation"}
+            last_reset = -1
+            for i, msg in enumerate(history):
+                if msg["role"] == "user" and msg["content"].strip().lower() in reset_keywords:
+                    last_reset = i
+            if last_reset >= 0:
+                # Skip the reset message and the bot's "Conversation reset!" reply
+                history = history[last_reset + 2:]
             if history:
                 print(f"[history] Recovered {len(history)} messages from chat_log for {phone}")
             return history
@@ -374,9 +383,10 @@ def handle_message(phone, text):
     add_to_history(conv, "user", text)
 
     # Build progress context from accumulated pending data (helps Claude track state)
+    # Works for both new users AND returning users signing up an additional kid
     progress_context = ""
     pending = conv.get("pending_data", {})
-    if pending and not conv.get("known_kids"):
+    if pending.get("name") or pending.get("sports"):
         progress_parts = []
         if pending.get("name"):
             progress_parts.append(f"name={pending['name']}")
