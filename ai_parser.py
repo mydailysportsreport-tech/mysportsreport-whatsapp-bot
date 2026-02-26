@@ -225,7 +225,7 @@ def parse_message(user_message, conversation_history=None, session_context=""):
     Returns:
         dict with keys: reply, action, data, needs
     """
-    system = SYSTEM_PROMPT + session_context if session_context else SYSTEM_PROMPT
+    system = session_context + SYSTEM_PROMPT if session_context else SYSTEM_PROMPT
     messages = []
 
     if conversation_history:

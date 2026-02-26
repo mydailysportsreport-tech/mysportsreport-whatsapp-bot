@@ -469,16 +469,19 @@ def handle_message(phone, text):
             parts.append(f"color theme: {pending['color_theme']}")
         if pending.get("html_theme"):
             parts.append(f"report style: {pending['html_theme']}")
+        gathered = '; '.join(parts)
+        # Inject at BEGINNING of system prompt (primacy effect) for max priority
         session_context = (
-            f"\n\n## CURRENT SESSION STATE\n"
-            f"You are CURRENTLY in the middle of signing up a new kid.\n"
-            f"Already gathered: {'; '.join(parts)}.\n"
-            f"CONTINUE this signup from where you left off. "
-            f"Do NOT restart, re-introduce yourself, or re-ask for any info listed above."
+            f"## CRITICAL — ACTIVE SIGNUP IN PROGRESS\n"
+            f"You are in the MIDDLE of signing up a new kid. Already gathered: {gathered}.\n"
+            f"CONTINUE this signup. Do NOT start over, re-introduce yourself, or ask for the name again.\n\n"
         )
 
-    # Append system context only to the current message so Claude sees it once
-    msg_for_claude = text + known_kids_context
+    # Prepend state reminder to user's message too (belt AND suspenders)
+    if name:
+        msg_for_claude = f"[Reminder: you are currently signing up {name}. Do not re-ask the name.]\n{text}" + known_kids_context
+    else:
+        msg_for_claude = text + known_kids_context
 
     # Build history for Claude: all prior messages, but without system context noise
     prior_history = conv["history"][:-1]
