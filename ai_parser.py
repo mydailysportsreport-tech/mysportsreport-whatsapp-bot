@@ -147,7 +147,7 @@ CRITICAL: Your entire response must be ONLY a single JSON object. No text before
 - **"unsubscribe"**: Deactivate a subscriber. "data" must have "email" or "name"
 - **"lookup"**: Look up existing subscriber(s) by email
 - **"send_report"**: User explicitly asks for a report to be sent/resent now (e.g. "send me Rafa's report", "can I get a new report?", "resend Tim's report"). "data" must include "name" of the kid whose report to send. If the user has only one kid, you can infer the name.
-- **"feature_request"**: User asked for something not currently supported (a sport, league, data type, etc.). Set "data" to {{"request": "brief description of what they asked for"}}. Still reply helpfully — let them know it's not available yet but we'll note the interest.
+- **"feature_request"**: User expressed interest in something not currently supported — a sport, league, data type, feature, etc. This includes direct requests ("can you add tennis?"), hypothetical interest ("if you ever add tennis I'd subscribe"), praise that mentions a missing feature ("love this, would be amazing with tennis"), or any message where the user signals they'd want something we don't offer yet. Set "data" to {{"request": "brief description of what they asked for"}}. Still reply helpfully — let them know it's not available yet but we'll note the interest. IMPORTANT: When in doubt, classify as feature_request — we'd rather get a notification we don't need than miss valuable feedback.
 
 ### The "needs" field:
 Track what's still missing. Examples: ["favorite_team", "sections", "report_style", "email", "confirmation"]
